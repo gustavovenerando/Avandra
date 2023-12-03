@@ -8,19 +8,19 @@ puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
 
 
 //SELECTORS/INFO - KABUM 
-// const pageSize = 100;
-// const searchUrl = "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched";
+// const numProductPerPage = 100;
+// const mainUrl = "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched";
 // const productTextSelector = 'div.sc-cdc9b13f-7:nth-child(INDEX) > a:nth-child(2) > div:nth-child(2) span[class="sc-d79c9c3f-0 nlmfp sc-cdc9b13f-16 eHyEuD nameCard"]';
-// const searchProductsCountSelector = "#listingCount";
-// const listClassSelector = ".productCard";
+// const productCountSelector = "#listingCount";
+// const productSelector = ".productCard";
 
 
 // SELECTORS/INFO - PICHAU 
-const pageSize = 36;
-const searchUrl = "https://www.pichau.com.br/hardware/placa-de-video?page=PAGE_NUM";
+const numProductPerPage = 36;
+const mainUrl = "https://www.pichau.com.br/hardware/placa-de-video?page=PAGE_NUM";
 const productTextSelector = 'div.MuiGrid-grid-xs-6:nth-child(INDEX) > a:nth-child(1) > div:nth-child(1) > div:nth-child(3) > h2:nth-child(1)';
-const searchProductsCountSelector = "div.MuiGrid-grid-lg-10 > div:nth-child(1) > div > div:nth-child(1) > div:nth-child(1) > div";
-const listClassSelector = 'a[data-cy="list-product"]';
+const productCountSelector = "div.MuiGrid-grid-lg-10 > div:nth-child(1) > div > div:nth-child(1) > div:nth-child(1) > div";
+const productSelector = 'a[data-cy="list-product"]';
 
 async function start() {
     const browser = await puppeteer.launch({ headless: false });
@@ -30,17 +30,17 @@ async function start() {
         height: 1200,
     });
 
-    const num_pages = await numPages(page, searchProductsCountSelector);
+    const num_pages = await numPages(page, productCountSelector, numProductPerPage);
     console.log("Number of pages: ", num_pages);
 
     const arr = [];
     for (let pageNum = 1; pageNum <= num_pages; pageNum++) {
         if(pageNum !== 1){
-            const url = searchUrl.replace("PAGE_NUM", `${pageNum}`);
+            const url = mainUrl.replace("PAGE_NUM", `${pageNum}`);
             await page.goto(url);
         }
 
-        const listSize = await listLength(page, listClassSelector);
+        const listSize = await listLength(page, productSelector);
         console.log("List size: ", listSize);
 
         for (let i = 1; i <= listSize; i++) {
@@ -69,8 +69,8 @@ async function getValue(page: Page, pageSelector: string): Promise<string | null
 }
 
 
-async function numPages(page: Page, pageSelector: string): Promise<number>{
-    const initialUrl = searchUrl.replace("PAGE_NUM", "1");
+async function numPages(page: Page, pageSelector: string, numProductPerPage: number): Promise<number>{
+    const initialUrl = mainUrl.replace("PAGE_NUM", "1");
     await page.goto(initialUrl);
 
     const text = await page.evaluate((selector) => {
@@ -83,7 +83,7 @@ async function numPages(page: Page, pageSelector: string): Promise<number>{
 
     const num = Number(text.split(" ")[0]);
 
-    return Math.ceil(num/pageSize);
+    return Math.ceil(num/numProductPerPage);
 }
 
 //Start 2 - Paginas e browsers em paralelo
@@ -97,7 +97,7 @@ async function start(){
         height: 1200,
     });
 
-    const num_pages = await numPages(page, searchProductsCountSelector);
+    const num_pages = await numPages(page, productCountSelector);
     console.log("Products Count: ", num_pages);
 
     const ctxArr = [];
@@ -124,7 +124,7 @@ async function createContext(browser: Browser, pageNum: number) {
     const url = PVUrl.replace("PAGE_NUM", `${pageNum}`);
 
     await page.goto(url);
-    const listSize = await listLength(page, listClassSelector);
+    const listSize = await listLength(page, productSelector);
 
     const resArr = []
     // for (let i = 1; i <= listSize; i++) {
