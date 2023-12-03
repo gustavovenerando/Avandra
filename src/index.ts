@@ -43,17 +43,22 @@ async function start() {
         const listSize = await listLength(page, productSelector);
         console.log("List size: ", listSize);
 
-        for (let i = 1; i <= listSize; i++) {
-            const productTextSel = productTextSelector.replace("INDEX", `${i}`);
-            const productTextValue = await getValue(page, productTextSel);
-
-            arr.push({
-                productTextValue
-            })
-        }
+        const productInfoSelArr = getProductInfoSelArr(productTextSelector, listSize);
+        const res = await Promise.all(productInfoSelArr.map(sel => getValue(page, sel)));
+        arr.push(res);
     }
 
     console.log("PRODUCTS: ", arr);
+}
+
+function getProductInfoSelArr(mainProductInfoSel: string, listSize: number): string[]{
+    const selArr = [];
+    for (let i = 1; i <= listSize; i++) {
+        const productInfoSel = mainProductInfoSel.replace("INDEX", `${i}`);
+        selArr.push(productInfoSel);
+    }
+
+    return selArr;
 }
 
 async function listLength(page: Page, pageSelector: string): Promise<number>{
@@ -62,10 +67,14 @@ async function listLength(page: Page, pageSelector: string): Promise<number>{
     }, pageSelector);
 }
 
-async function getValue(page: Page, pageSelector: string): Promise<string | null | undefined>{
-    return await page.evaluate((selector) => {
+async function getValue(page: Page, pageSelector: string): Promise<string>{
+    const value =  await page.evaluate((selector) => {
         return document.querySelector(selector)?.textContent;
     }, pageSelector);
+
+    if(!value) throw new Error("Information about product not found");
+
+    return value;
 }
 
 
