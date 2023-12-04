@@ -30,25 +30,46 @@ async function start() {
         height: 1200,
     });
 
-    const num_pages = await numPages(page, productCountSelector, numProductPerPage);
-    console.log("Number of pages: ", num_pages);
+    const numPages = await getNumPages(page, productCountSelector, numProductPerPage);
+    page.close();
+    console.log("Number of pages: ", numPages);
 
-    const arr = [];
-    for (let pageNum = 1; pageNum <= num_pages; pageNum++) {
-        if(pageNum !== 1){
-            const url = mainUrl.replace("PAGE_NUM", `${pageNum}`);
-            await page.goto(url);
-        }
+    const urlArr = getUrlArr(numPages);
 
-        const listSize = await listLength(page, productSelector);
-        console.log("List size: ", listSize);
+    const result = await Promise.all(urlArr.map(url => extracPageData(browser, url)));
 
-        const productInfoSelArr = getProductInfoSelArr(productTextSelector, listSize);
-        const res = await Promise.all(productInfoSelArr.map(sel => getValue(page, sel)));
-        arr.push(res);
+    console.log("Final Result: ", result);
+}
+
+function getUrlArr(numPages: number): string[]{
+    const urlArr = [];
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const url = mainUrl.replace("PAGE_NUM", `${pageNum}`);
+        urlArr.push(url);
     }
 
-    console.log("PRODUCTS: ", arr);
+    return urlArr;
+}
+
+async function extracPageData(browser: Browser ,url: string){
+    const page = await browser.newPage();
+    await page.setViewport({
+        width: 1600,
+        height: 1200,
+    });
+
+    await page.goto(url);
+
+
+    const listSize = await listLength(page, productSelector);
+    console.log("List size: ", listSize, "- URL: ", url);
+
+    const productInfoSelArr = getProductInfoSelArr(productTextSelector, listSize);
+    const res = await Promise.all(productInfoSelArr.map(sel => extractProductsData(page, sel)));
+
+    await page.close();
+
+    return res;
 }
 
 function getProductInfoSelArr(mainProductInfoSel: string, listSize: number): string[]{
@@ -67,7 +88,7 @@ async function listLength(page: Page, pageSelector: string): Promise<number>{
     }, pageSelector);
 }
 
-async function getValue(page: Page, pageSelector: string): Promise<string>{
+async function extractProductsData(page: Page, pageSelector: string): Promise<string>{
     const value =  await page.evaluate((selector) => {
         return document.querySelector(selector)?.textContent;
     }, pageSelector);
@@ -78,7 +99,7 @@ async function getValue(page: Page, pageSelector: string): Promise<string>{
 }
 
 
-async function numPages(page: Page, pageSelector: string, numProductPerPage: number): Promise<number>{
+async function getNumPages(page: Page, pageSelector: string, numProductPerPage: number): Promise<number>{
     const initialUrl = mainUrl.replace("PAGE_NUM", "1");
     await page.goto(initialUrl);
 
@@ -106,11 +127,11 @@ async function start(){
         height: 1200,
     });
 
-    const num_pages = await numPages(page, productCountSelector);
-    console.log("Products Count: ", num_pages);
+    const numPages = await getNumPages(page, productCountSelector);
+    console.log("Products Count: ", numPages);
 
     const ctxArr = [];
-    // for (let pageNum = 1; pageNum <= num_pages; pageNum++) {
+    // for (let pageNum = 1; pageNum <= numPages; pageNum++) {
     for (let pageNum = 1; pageNum <= 5; pageNum++) {
         ctxArr.push(createContext(browser, pageNum));
     }
