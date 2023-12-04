@@ -28,6 +28,9 @@ const siteArr = [
 async function start() {
     const browser = await puppeteer.launch({ headless: false });
 
+    //TO-DO: limit number of pages concurrently (batches)
+    //TO-DO: add novos sites
+    
     const urlArr = [];
     for (let { numProductPerPage, mainUrl, productCountSelector, ...productSelectors } of siteArr) {
         const page = await browser.newPage();
@@ -45,6 +48,8 @@ async function start() {
     const result = await Promise.all(urlArr.map(elem => extracPageData(browser, elem.url, elem.productTextSelector, elem.productSelector)));
 
     console.log("Final Result: ", result);
+
+    await browser.close();
 }
 
 function getUrlArr(numPages: number, mainUrl: string, productSelectors: any): any[]{
@@ -53,8 +58,6 @@ function getUrlArr(numPages: number, mainUrl: string, productSelectors: any): an
         const url = mainUrl.replace("PAGE_NUM", `${pageNum}`);
         urlArr.push({url, ...productSelectors});
     }
-
-    // console.log("URL ARR: ", urlArr);
 
     return urlArr;
 }
