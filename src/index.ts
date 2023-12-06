@@ -31,39 +31,40 @@ async function start() {
     //TO-DO: limit number of pages concurrently (batches)
     //TO-DO: add novos sites
 
-    const urlsToExtractData = await getAllSitesUrls(browser, siteArr);
+    const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
-    const result = await Promise.all(urlsToExtractData.map(elem => extracPageData(browser, elem.url, elem.productTextSelector, elem.productCardSelector)));
+    const result = await Promise.all(allSitePagesInfoToExtractData.map(pageInfo => extracPageData(browser, pageInfo)));
 
     console.log("Final Result: ", result);
 
     await browser.close();
 }
 
-async function getAllSitesUrls(browser: Browser, siteArr: any[]): Promise<any[]>{
-    const sitesUrls = [];
+async function getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]>{
+    const sitesPagesInfo = [];
 
     for (let { numProductPerPage, mainUrl, productCountSelector, ...productSelectors } of siteArr) {
         const numPages = await getNumPages(browser, productCountSelector, numProductPerPage, mainUrl);
         console.log("Number of pages: ", numPages);
 
-        sitesUrls.push(...getSiteUrls(numPages, mainUrl, productSelectors));
+        sitesPagesInfo.push(...getSitePagesInfo(numPages, mainUrl, productSelectors));
     }
 
-    return sitesUrls;
+    return sitesPagesInfo;
 }
 
-function getSiteUrls(numPages: number, mainUrl: string, productSelectors: any): any[]{
-    const siteUrls = [];
+function getSitePagesInfo(numPages: number, mainUrl: string, productSelectors: any): any[]{
+    const pagesInfo = [];
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
         const url = mainUrl.replace("PAGE_NUM", `${pageNum}`);
-        siteUrls.push({url, ...productSelectors});
+        pagesInfo.push({url, ...productSelectors});
     }
 
-    return siteUrls;
+    return pagesInfo;
 }
 
-async function extracPageData(browser: Browser ,url: string, productTextSelector: string, productCardSelector: string){
+async function extracPageData(browser: Browser, pageInfo: any){
+    const { url, productTextSelector, productCardSelector } = pageInfo;
     const page = await browser.newPage();
     await page.setViewport({
         width: 1600,
