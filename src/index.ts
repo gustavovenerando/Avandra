@@ -29,15 +29,34 @@ async function start() {
     const browser = await puppeteer.launch({ headless: false });
 
     //TO-DO: limit number of pages concurrently (batches)
+    //TO-DO: add tratativa de erro (try catch)
     //TO-DO: add novos sites
 
     const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
-    const result = await Promise.all(allSitePagesInfoToExtractData.map(pageInfo => extracPageData(browser, pageInfo)));
+    const pagesInfoChunks = sliceArrayIntoChunks(allSitePagesInfoToExtractData, 5);
+
+    const result = [];
+    for(let chunk of pagesInfoChunks){
+        const chunkResult = await Promise.all(chunk.map(pageInfo => extracPageData(browser, pageInfo)))
+        result.push(...chunkResult);
+    }
 
     console.log("Final Result: ", result);
 
     await browser.close();
+}
+
+function sliceArrayIntoChunks(arr:any[], chunkSize:number){
+    const chunks = []
+    let i = 0
+    const n = arr.length;
+
+    while (i < n) {
+        chunks.push(arr.slice(i, i += chunkSize))
+    }
+
+    return chunks;
 }
 
 async function getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]>{
