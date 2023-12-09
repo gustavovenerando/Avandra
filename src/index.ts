@@ -9,6 +9,28 @@ puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
 const PAGE_INFO_CHUNK_SIZE = 5;
 const PRODUCT_SELECTOR_CHUNK_SIZE = 20;
 
+interface ExtractionI{
+    readonly puppeteerClass: any;
+    chunkSize: number;
+    extractionData: string[]; 
+}
+
+interface ExtractPageDataI{
+    (browser: Browser, pageInfo: any): Promise<any[]>;
+}
+
+interface ExtractProductDataI{
+    (page: Page, selector: string): Promise<string>;
+}
+
+interface PageExtractionI extends ExtractionI{
+    extractFunction: ExtractPageDataI;
+}
+
+interface ProductExtractionI extends ExtractionI{
+    extractFunction: ExtractProductDataI;
+}
+
 const siteArr = [
     {
         site: "pichau",
@@ -51,17 +73,32 @@ async function start() {
 
     const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
-    const pagesInfoChunks = sliceArrayIntoChunks(allSitePagesInfoToExtractData, PAGE_INFO_CHUNK_SIZE);
-
-    const result = [];
-    for(let chunk of pagesInfoChunks){
-        const chunkResult = await Promise.all(chunk.map(pageInfo => extracPageData(browser, pageInfo)))
-        result.push(...chunkResult);
+    const pageExtractionInfo: PageExtractionI = {
+        puppeteerClass: browser,
+        extractionData: allSitePagesInfoToExtractData,
+        chunkSize: PAGE_INFO_CHUNK_SIZE,
+        extractFunction: extracPageData 
     }
+
+    const result = await executeExtractionTask(pageExtractionInfo);
 
     console.log("Final Result: ", result);
 
     await browser.close();
+}
+
+async function executeExtractionTask(extractionInfo: PageExtractionI | ProductExtractionI){
+    const {puppeteerClass, extractionData, chunkSize, extractFunction} = extractionInfo;
+
+    const chunks = sliceArrayIntoChunks(extractionData, chunkSize);
+
+    const result = [];
+    for(let chunk of chunks){
+        const chunkResult = await Promise.all(chunk.map(pageInfo => extractFunction(puppeteerClass, pageInfo)))
+        result.push(...chunkResult);
+    }
+
+    return result;
 }
 
 function sliceArrayIntoChunks(arr:any[], chunkSize:number){
@@ -99,7 +136,7 @@ function getSitePagesInfo(numPages: number, mainUrl: string, productSelectors: a
     return pagesInfo;
 }
 
-async function extracPageData(browser: Browser, pageInfo: any){
+async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
     const { url, productTextSelector, productCardSelector } = pageInfo;
     const page = await browser.newPage();
     await page.setViewport({
@@ -114,13 +151,14 @@ async function extracPageData(browser: Browser, pageInfo: any){
 
     const productInfoSelectors = getProductInfoSelelectors(productTextSelector, listSize);
 
-    const productSelectorsChunks = sliceArrayIntoChunks(productInfoSelectors, PRODUCT_SELECTOR_CHUNK_SIZE);
-
-    let result = [];
-    for(let chunk of productSelectorsChunks){
-        const chunkResult = await Promise.all(chunk.map(sel => extractProductData(page, sel)));
-        result.push(...chunkResult);
+    const productExtractionInfo: ProductExtractionI = {
+        puppeteerClass: page,
+        extractionData: productInfoSelectors,
+        chunkSize: PRODUCT_SELECTOR_CHUNK_SIZE,
+        extractFunction: extractProductData 
     }
+
+    const result = await executeExtractionTask(productExtractionInfo);
 
     await page.close();
 
