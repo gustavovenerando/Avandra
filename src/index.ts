@@ -6,6 +6,9 @@ import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
 
+const PAGE_INFO_CHUNK_SIZE = 5;
+const PRODUCT_SELECTOR_CHUNK_SIZE = 20;
+
 const siteArr = [
     {
         site: "pichau",
@@ -48,7 +51,7 @@ async function start() {
 
     const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
-    const pagesInfoChunks = sliceArrayIntoChunks(allSitePagesInfoToExtractData, 5);
+    const pagesInfoChunks = sliceArrayIntoChunks(allSitePagesInfoToExtractData, PAGE_INFO_CHUNK_SIZE);
 
     const result = [];
     for(let chunk of pagesInfoChunks){
@@ -110,11 +113,18 @@ async function extracPageData(browser: Browser, pageInfo: any){
     console.log("List size: ", listSize, "- URL: ", url);
 
     const productInfoSelectors = getProductInfoSelelectors(productTextSelector, listSize);
-    const res = await Promise.all(productInfoSelectors.map(sel => extractProductData(page, sel)));
+
+    const productSelectorsChunks = sliceArrayIntoChunks(productInfoSelectors, PRODUCT_SELECTOR_CHUNK_SIZE);
+
+    let result = [];
+    for(let chunk of productSelectorsChunks){
+        const chunkResult = await Promise.all(chunk.map(sel => extractProductData(page, sel)));
+        result.push(...chunkResult);
+    }
 
     await page.close();
 
-    return res;
+    return result;
 }
 
 function getProductInfoSelelectors(mainProductInfoSel: string, listSize: number): string[]{
