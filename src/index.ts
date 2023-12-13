@@ -20,7 +20,7 @@ interface ExtractPageDataI{
 }
 
 interface ExtractProductDataI{
-    (page: Page, selector: string): Promise<string>;
+    (page: Page, productSelectors: ProductSelectorsI): Promise<ProductSelectorsI>;
 }
 
 interface PageExtractionI extends ExtractionI{
@@ -29,6 +29,10 @@ interface PageExtractionI extends ExtractionI{
 
 interface ProductExtractionI extends ExtractionI{
     extractFunction: ExtractProductDataI;
+}
+
+interface ProductSelectorsI {
+    [key: string]:string
 }
 
 const siteArr = [
@@ -147,13 +151,17 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
     const listSize = await listLength(page, productCardSelector);
     console.log("List size: ", listSize, "- URL: ", url);
 
-    const productInfoSelectors = getProductInfoSelelectors(productNameSelector, listSize);
+    const productSelectors: ProductSelectorsI = {
+        name: productNameSelector
+    }
+
+    const productInfoSelectors = getProductInfoSelelectors(productSelectors, listSize);
 
     const productExtractionInfo: ProductExtractionI = {
         puppeteerClass: page,
         extractionData: productInfoSelectors,
         chunkSize: PRODUCT_SELECTOR_CHUNK_SIZE,
-        extractFunction: getElementText 
+        extractFunction: extractProductData 
     }
 
     const result = await executeExtractionTask(productExtractionInfo);
@@ -164,27 +172,43 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
 }
 
 //Extrair dados de todos os seletors do produto
-async function extractProductData(page: Page, productSelectorsObj: any){
-    let resultObj = {
+async function extractProductData(page: Page, productSelectors: ProductSelectorsI){
+    let resultObj: ProductSelectorsI = {
         name: "",
-        valuePix: "",
-        valueCredit: "",
-        url: ""
+        // valuePix: "",
+        // valueCredit: "",
+        // url: ""
     }
-    for(const [key, value] of Object.entries(productSelectorsObj)){
-        if(key === "productNameSelector"){
-            resultObj.name = await getElementText(page, value);
-        }
+
+    // let funcObj = {
+    //     name: getElementText,
+    //     valuePix: "",
+    //     valueCredit: "",
+    //     url: ""
+    // }
+
+    for(const [key, selector] of Object.entries(productSelectors)){
+        resultObj[key] = await getElementText(page, selector);
     } 
+
+    return resultObj;
 }
 
-//Alterar funcao para retornar um array de objetos com o selectors dos produtos
-//[{ text: ladfj(INDEX), valorPix: lasdfj(INDEX), ...}]
-function getProductInfoSelelectors(mainProductInfoSel: string, listSize: number): string[]{
+function getProductInfoSelelectors(productSelectors: ProductSelectorsI, listSize: number): any[]{
     const productInfoSelectors = [];
     for (let i = 1; i <= listSize; i++) {
-        const productInfoSel = mainProductInfoSel.replace("INDEX", `${i}`);
-        productInfoSelectors.push(productInfoSel);
+        const filledProductSelectors: ProductSelectorsI = {
+            name: "",
+            // valuePix: "",
+            // valueCredit: "",
+            // url: ""
+        };
+
+        for(const [key, selector] of Object.entries(productSelectors)){
+            filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
+        }
+
+        productInfoSelectors.push(filledProductSelectors);
     }
 
     return productInfoSelectors;
