@@ -34,30 +34,27 @@ interface ProductExtractionI extends ExtractionI{
 const siteArr = [
     {
         site: "pichau",
-        // numProductPerPage: 36,
         numProductSelectorType: "total",
         mainUrl: "https://www.pichau.com.br/hardware/placa-de-video?page=PAGE_NUM",
         numProductSelector : "div.MuiGrid-grid-lg-10 > div:nth-child(1) > div > div:nth-child(1) > div:nth-child(1) > div",
         productCardSelector : 'a[data-cy="list-product"]',
-        productTextSelector: 'div.MuiGrid-grid-xs-6:nth-child(INDEX) > a:nth-child(1) > div:nth-child(1) > div:nth-child(3) > h2:nth-child(1)',
+        productNameSelector: 'div.MuiGrid-grid-xs-6:nth-child(INDEX) > a:nth-child(1) > div:nth-child(1) > div:nth-child(3) > h2:nth-child(1)',
     },
     {
         site: "kabum",
-        // numProductPerPage: 100,
         numProductSelectorType: "total",
         mainUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
         numProductSelector : "#listingCount",
         productCardSelector : ".productCard",
-        productTextSelector: 'div.sc-cdc9b13f-7:nth-child(INDEX) > a:nth-child(2) > div:nth-child(2) span[class="sc-d79c9c3f-0 nlmfp sc-cdc9b13f-16 eHyEuD nameCard"]',
+        productNameSelector: 'div.sc-cdc9b13f-7:nth-child(INDEX) > a:nth-child(2) > div:nth-child(2) span[class="sc-d79c9c3f-0 nlmfp sc-cdc9b13f-16 eHyEuD nameCard"]',
     },
     {
         site: "gkinfostore",
-        // numProductPerPage: 40,
         numProductSelectorType: "pagination",
         mainUrl: "https://www.gkinfostore.com.br/placa-de-video?pagina=PAGE_NUM",
         numProductSelector : ".ordenar-listagem.rodape.borda-alpha .pagination > ul",
         productCardSelector : "#corpo #listagemProdutos .listagem-item",
-        productTextSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
+        productNameSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
     },
 ]
 
@@ -138,7 +135,7 @@ function getSitePagesInfo(numPages: number, siteInfo: any): any[]{
 }
 
 async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
-    const { url, productTextSelector, productCardSelector } = pageInfo;
+    const { url, productNameSelector, productCardSelector } = pageInfo;
     const page = await browser.newPage();
     await page.setViewport({
         width: 1600,
@@ -150,7 +147,7 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
     const listSize = await listLength(page, productCardSelector);
     console.log("List size: ", listSize, "- URL: ", url);
 
-    const productInfoSelectors = getProductInfoSelelectors(productTextSelector, listSize);
+    const productInfoSelectors = getProductInfoSelelectors(productNameSelector, listSize);
 
     const productExtractionInfo: ProductExtractionI = {
         puppeteerClass: page,
@@ -166,6 +163,23 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
     return result;
 }
 
+//Extrair dados de todos os seletors do produto
+async function extractProductData(page: Page, productSelectorsObj: any){
+    let resultObj = {
+        name: "",
+        valuePix: "",
+        valueCredit: "",
+        url: ""
+    }
+    for(const [key, value] of Object.entries(productSelectorsObj)){
+        if(key === "productNameSelector"){
+            resultObj.name = await getElementText(page, value);
+        }
+    } 
+}
+
+//Alterar funcao para retornar um array de objetos com o selectors dos produtos
+//[{ text: ladfj(INDEX), valorPix: lasdfj(INDEX), ...}]
 function getProductInfoSelelectors(mainProductInfoSel: string, listSize: number): string[]{
     const productInfoSelectors = [];
     for (let i = 1; i <= listSize; i++) {
@@ -182,10 +196,10 @@ async function listLength(page: Page, pageSelector: string): Promise<number>{
     }, pageSelector);
 }
 
-async function getElementText(page: Page, pageSelector: string): Promise<string>{
-    const value =  await page.evaluate((selector) => {
+async function getElementText(page: Page, textSelector: string): Promise<string>{
+    const value = await page.evaluate((selector) => {
         return document.querySelector(selector)?.textContent;
-    }, pageSelector);
+    }, textSelector);
 
     if(!value) throw new Error("Information about product not found");
 
