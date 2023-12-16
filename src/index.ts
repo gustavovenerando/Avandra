@@ -99,10 +99,20 @@ async function executeExtractionTask(extractionInfo: PageExtractionI | ProductEx
     const chunks = sliceArrayIntoChunks(extractionData, chunkSize);
 
     const result = [];
+    const rejResults = [];
     for(let chunk of chunks){
-        const chunkResult = await Promise.all(chunk.map(pageInfo => extractFunction(puppeteerClass, pageInfo)))
-        result.push(...chunkResult);
+        const chunkResult = await Promise.allSettled(chunk.map(pageInfo => extractFunction(puppeteerClass, pageInfo)))
+
+        //@ts-ignore
+        const fulfilledResults = chunkResult.filter(res => res.status === "fulfilled").map(res => res.value);
+        result.push(...fulfilledResults);
+
+        //@ts-ignore
+        const rejectedResults = chunkResult.filter(res => res.status === "rejected").map(res => res.reason);
+        rejResults.push(...rejectedResults);
     }
+
+    if(rejResults.length) console.log("=======>> REJECTED RESULTS REASONS: ", rejResults);
 
     return result;
 }
@@ -161,7 +171,7 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
         height: 1200,
     });
 
-    await page.goto(url);
+    await page.goto(url, {waitUntil: "domcontentloaded"});
 
     const listSize = await listLength(page, productCardSelector);
     console.log("List size: ", listSize, "- URL: ", url);
@@ -193,17 +203,6 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
 //Extrair dados de todos os seletors do produto
 async function extractProductData(page: Page, productSelectors: ProductSelectorsI){
     let resultObj: ProductSelectorsI = { };
-    // const {soldOutSelector} = productSelectors;
-    //
-    // const isSoldOut = await getElementText(page, soldOutSelector); 
-    // if(isSoldOut){
-    //     delete productSelectors.pricePixSelector;
-    //     delete productSelectors.priceCreditSelector;
-    //     resultObj.soldOut = "true";
-    // }
-    // else{
-    //     resultObj.soldOut = "false";
-    // }
 
     for(const [key, selector] of Object.entries(productSelectors)){
         switch (key){
@@ -263,7 +262,7 @@ async function getNumPages(browser: Browser, siteInfo:any): Promise<number> {
     const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector} = siteInfo;
 
     const initialUrl = extractUrl.replace("PAGE_NUM", "1");
-    await page.goto(initialUrl);
+    await page.goto(initialUrl, {waitUntil: "domcontentloaded"});
 
     let numPages;
     if (numProductSelectorType === "pagination") {
