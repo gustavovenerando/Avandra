@@ -20,7 +20,7 @@ interface ExtractPageDataI{
 }
 
 interface ExtractProductDataI{
-    (page: Page, productSelectors: ProductSelectorsI): Promise<ProductSelectorsI>;
+    (page: Page, productSelectors: ProductSelectorsI): Promise<ExtractedProductSelectorsI>;
 }
 
 interface PageExtractionI extends ExtractionI{
@@ -35,6 +35,10 @@ interface ProductSelectorsI {
     [key: string]: string
 }
 
+interface ExtractedProductSelectorsI {
+    [key: string]: string | boolean
+}
+
 const siteArr = [
     {
         site: "pichau",
@@ -46,25 +50,35 @@ const siteArr = [
         productNameSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) .MuiCardContent-root > h2',
         pricePixSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) .MuiCardContent-root > div > div > div > div:nth-child(3)',
         priceCreditSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) .MuiCardContent-root > div > div:nth-child(3) > div > div',
-        productUrlSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) > a',
         soldOutSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) .MuiCardContent-root > p',
+        productEndpointSelector: 'div[class="MuiContainer-root"] .MuiGrid-item > .MuiGrid-container > div:nth-child(INDEX) > a',
     },
-    // {
-    //     site: "kabum",
-    //     numProductSelectorType: "total",
-    //     extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
-    //     numProductSelector : "#listingCount",
-    //     productCardSelector : ".productCard",
-    //     productNameSelector: 'div.sc-cdc9b13f-7:nth-child(INDEX) > a:nth-child(2) > div:nth-child(2) span[class="sc-d79c9c3f-0 nlmfp sc-cdc9b13f-16 eHyEuD nameCard"]',
-    // },
-    // {
-    //     site: "gkinfostore",
-    //     numProductSelectorType: "pagination",
-    //     extractUrl: "https://www.gkinfostore.com.br/placa-de-video?pagina=PAGE_NUM",
-    //     numProductSelector : ".ordenar-listagem.rodape.borda-alpha .pagination > ul",
-    //     productCardSelector : "#corpo #listagemProdutos .listagem-item",
-    //     productNameSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
-    // },
+    {
+        site: "kabum",
+        numProductSelectorType: "total",
+        extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
+        baseUrl: "https://www.kabum.com.br",
+        numProductSelector : "#listingCount",
+        productCardSelector : ".productCard",
+        productNameSelector: '#listing main > div:nth-child(INDEX) .productLink .nameCard',
+        pricePixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
+        priceCreditSelector: '',
+        soldOutSelector: '#listing main > div:nth-child(INDEX) .productLink .unavailablePricesCard',
+        productEndpointSelector: '#listing main > div:nth-child(INDEX) .productLink',
+    },
+    {
+        site: "gkinfostore",
+        numProductSelectorType: "pagination",
+        extractUrl: "https://www.gkinfostore.com.br/placa-de-video?pagina=PAGE_NUM",
+        baseUrl: "https://www.gkinfostore.com.br",
+        numProductSelector : ".ordenar-listagem.rodape.borda-alpha .pagination > ul",
+        productCardSelector : "#corpo #listagemProdutos .listagem-item",
+        productNameSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
+        pricePixSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto .desconto-a-vista',
+        priceCreditSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto .preco-promocional',
+        soldOutSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .bandeiras-produto .bandeira-indisponivel',
+        productEndpointSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
+    },
 ]
 
 async function start() {
@@ -74,8 +88,8 @@ async function start() {
     //TO-DO: add novos sites
     //TO-DO: add novos selectors para preco parcelado, preco a vista e link do produto
     //TO-DO: add tratativa regex para conseguir o modelo do produto do titulo
-    //TO-DO: refatorar selectors da kabum e da pichau
     //TO-DO: resolver casos onde produto está esgotado e não possui os selectors de preço - Ver como sera nos outros sites
+    //TO-DO: Modelar estrutura do banco e tabelas (MySql)
 
     const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
@@ -161,7 +175,7 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
         productCardSelector,
         pricePixSelector,
         priceCreditSelector,
-        productUrlSelector,
+        productEndpointSelector,
         soldOutSelector
     } = pageInfo;
 
@@ -180,8 +194,8 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
         name: productNameSelector,
         pricePix: pricePixSelector,
         priceCredit: priceCreditSelector,
-        soldOut: soldOutSelector
-        // url: productUrlSelector
+        soldOut: soldOutSelector,
+        endpoint: productEndpointSelector
     }
 
     const productInfoSelectors = getProductInfoSelelectors(productSelectors, listSize);
@@ -200,14 +214,19 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
     return result;
 }
 
-//Extrair dados de todos os seletors do produto
 async function extractProductData(page: Page, productSelectors: ProductSelectorsI){
-    let resultObj: ProductSelectorsI = { };
+    let resultObj: ExtractedProductSelectorsI = { };
 
     for(const [key, selector] of Object.entries(productSelectors)){
         switch (key){
-            // case "url":
-                // resultObj[key] = await ;
+            case "soldOut":
+                const isSoldOut = await getElementText(page,selector);
+                if(isSoldOut) resultObj[key] = true;
+                else resultObj[key] = false;
+                break;
+            case "endpoint":
+                resultObj[key] = await getElementHref(page, selector);
+                break;
             default:
                 resultObj[key] = await getElementText(page, selector);
                 break;
@@ -217,12 +236,14 @@ async function extractProductData(page: Page, productSelectors: ProductSelectors
     return resultObj;
 }
 
+//Mudar funcao para agregar mais informacao ao objeto do produto
 function getProductInfoSelelectors(productSelectors: ProductSelectorsI, listSize: number): any[]{
     const productInfoSelectors = [];
     for (let i = 1; i <= listSize; i++) {
         const filledProductSelectors: ProductSelectorsI = {};
 
         for(const [key, selector] of Object.entries(productSelectors)){
+            if(!selector) continue;
             filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
         }
 
@@ -232,23 +253,43 @@ function getProductInfoSelelectors(productSelectors: ProductSelectorsI, listSize
     return productInfoSelectors;
 }
 
-async function listLength(page: Page, pageSelector: string): Promise<number>{
+async function listLength(page: Page, productCardSelector: string): Promise<number>{
     return await page.evaluate((selector) => {
         return document.querySelectorAll(selector).length;
-    }, pageSelector);
+    }, productCardSelector);
 }
 
 async function getElementText(page: Page, textSelector: string): Promise<string>{
-    const value = await page.evaluate((selector) => {
+    let text = await page.evaluate((selector) => {
         return document.querySelector(selector)?.textContent;
     }, textSelector);
 
-    if(!value){
+    if(!text){
         // console.error("Information about product not found. Text selector: " + textSelector + " - URL: " + page.url());
         return "";
     } 
 
-    return value;
+    text = text.trim();
+
+    if(text.includes("\n")){
+        const textSplit = text.split("\n");
+        text = textSplit[0];
+    }
+
+    return text;
+}
+
+async function getElementHref(page: Page, urlSelector: string): Promise<string>{
+    const href = await page.evaluate((selector) => {
+        return document.querySelector(selector)?.getAttribute("href");
+    }, urlSelector);
+
+    if(!href){
+        console.error("Product href not found. Product Url Selector: " + urlSelector + " - URL: " + page.url());
+        return "";
+    } 
+
+    return href;
 }
 
 
