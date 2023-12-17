@@ -6,8 +6,8 @@ import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 puppeteer.use(StealthPlugin());
 puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
 
-const PAGE_INFO_CHUNK_SIZE = 5;
-const PRODUCT_SELECTOR_CHUNK_SIZE = 20;
+const PAGE_INFO_CHUNK_SIZE = 10;
+const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 
 interface ExtractionI{
     readonly puppeteerClass: any;
