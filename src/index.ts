@@ -82,7 +82,10 @@ const siteArr = [
 ]
 
 async function start() {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox"]
+    });
 
     //TO-DO: add tratativa de erro (try catch)
     //TO-DO: add novos sites
