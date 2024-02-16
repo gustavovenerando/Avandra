@@ -83,7 +83,7 @@ const siteArr = [
 
 async function start() {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ["--no-sandbox"]
     });
 
@@ -187,6 +187,15 @@ async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
         width: 1600,
         height: 1200,
     });
+
+    //Blocking image, font and styles requests to improve performance
+    await page.setRequestInterception(true);
+    page.on('request', req => {
+        if(["stylesheet", "font", "image"].includes(req.resourceType()))
+            req.abort();
+        else
+            req.continue();
+    })
 
     await page.goto(url, {waitUntil: "domcontentloaded"});
 
@@ -302,6 +311,15 @@ async function getNumPages(browser: Browser, siteInfo:any): Promise<number> {
         width: 1600,
         height: 1200,
     });
+
+    //Blocking image, font and styles requests to improve performance
+    await page.setRequestInterception(true);
+    page.on('request', req => {
+        if(["stylesheet", "font", "image"].includes(req.resourceType()))
+            req.abort();
+        else
+            req.continue();
+    })
 
     const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector} = siteInfo;
 
