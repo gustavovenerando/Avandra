@@ -82,32 +82,38 @@ const siteArr = [
 ]
 
 async function start() {
-    const browser = await puppeteer.launch({
-        headless: false,
-        args: ["--no-sandbox"]
-    });
+    try {
+        const browser = await puppeteer.launch({
+            headless: false,
+            args: ["--no-sandbox"]
+        });
 
-    //TO-DO: add tratativa de erro (try catch)
-    //TO-DO: add novos sites
-    //TO-DO: add novos selectors para preco parcelado, preco a vista e link do produto
-    //TO-DO: add tratativa regex para conseguir o modelo do produto do titulo
-    //TO-DO: resolver casos onde produto está esgotado e não possui os selectors de preço - Ver como sera nos outros sites
-    //TO-DO: Modelar estrutura do banco e tabelas (MySql)
+        //TO-DO: add tratativa de erro (try catch)
+        //TO-DO: add novos sites
+        //TO-DO: add novos selectors para preco parcelado, preco a vista e link do produto
+        //TO-DO: add tratativa regex para conseguir o modelo do produto do titulo
+        //TO-DO: resolver casos onde produto está esgotado e não possui os selectors de preço - Ver como sera nos outros sites
+        //TO-DO: Modelar estrutura do banco e tabelas (MySql)
 
-    const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
+        const allSitePagesInfoToExtractData = await getAllSitesPagesInfo(browser, siteArr);
 
-    const pageExtractionInfo: PageExtractionI = {
-        puppeteerClass: browser,
-        extractionData: allSitePagesInfoToExtractData,
-        chunkSize: PAGE_INFO_CHUNK_SIZE,
-        extractFunction: extracPageData 
+        const pageExtractionInfo: PageExtractionI = {
+            puppeteerClass: browser,
+            extractionData: allSitePagesInfoToExtractData,
+            chunkSize: PAGE_INFO_CHUNK_SIZE,
+            extractFunction: extracPageData
+        }
+
+        const result = await executeExtractionTask(pageExtractionInfo);
+
+        console.log("Final Result: ", result);
+
+        await browser.close();
+
+    } catch(err:any){
+        console.error("Error extracting info. Error: ", err);
     }
 
-    const result = await executeExtractionTask(pageExtractionInfo);
-
-    console.log("Final Result: ", result);
-
-    await browser.close();
 }
 
 async function executeExtractionTask(extractionInfo: PageExtractionI | ProductExtractionI){
@@ -129,7 +135,16 @@ async function executeExtractionTask(extractionInfo: PageExtractionI | ProductEx
         rejResults.push(...rejectedResults);
     }
 
-    if(rejResults.length) console.log("=======>> REJECTED RESULTS REASONS: ", rejResults);
+    if(rejResults.length){
+        const flatRejRes = rejResults.flat(Infinity);
+        for(const rej of flatRejRes){
+            console.log(
+                "Rejected result - Parameters: ", rej.url || rej.productSelectors,
+                " - Message: ", rej.message,
+                " - Stack: ", rej.stack
+            );
+        }
+    }
 
     return result;
 }
@@ -172,80 +187,93 @@ function getSitePagesInfo(numPages: number, siteInfo: any): any[]{
 }
 
 async function extracPageData(browser: Browser, pageInfo: any): Promise<any[]>{
-    const { 
-        url, 
-        productNameSelector, 
-        productCardSelector,
-        pricePixSelector,
-        priceCreditSelector,
-        productEndpointSelector,
-        soldOutSelector
-    } = pageInfo;
+    try {
+        const {
+            url,
+            productNameSelector,
+            productCardSelector,
+            pricePixSelector,
+            priceCreditSelector,
+            productEndpointSelector,
+            soldOutSelector
+        } = pageInfo;
 
-    const page = await browser.newPage();
-    await page.setViewport({
-        width: 1600,
-        height: 1200,
-    });
+        const page = await browser.newPage();
+        await page.setViewport({
+            width: 1600,
+            height: 1200,
+        });
 
-    //Blocking image, font and styles requests to improve performance
-    await page.setRequestInterception(true);
-    page.on('request', req => {
-        if(["stylesheet", "font", "image"].includes(req.resourceType()))
+        //Blocking image, font and styles requests to improve performance
+        await page.setRequestInterception(true);
+        page.on('request', req => {
+            if (["stylesheet", "font", "image"].includes(req.resourceType()))
             req.abort();
-        else
+            else
             req.continue();
-    })
+        })
 
-    await page.goto(url, {waitUntil: "domcontentloaded"});
+        await page.goto(url, { waitUntil: "domcontentloaded" });
 
-    const listSize = await listLength(page, productCardSelector);
-    console.log("List size: ", listSize, "- URL: ", url);
+        const listSize = await listLength(page, productCardSelector);
+        console.log("List size: ", listSize, "- URL: ", url);
 
-    const productSelectors: ProductSelectorsI = {
-        name: productNameSelector,
-        pricePix: pricePixSelector,
-        priceCredit: priceCreditSelector,
-        soldOut: soldOutSelector,
-        endpoint: productEndpointSelector
+        const productSelectors: ProductSelectorsI = {
+            name: productNameSelector,
+            pricePix: pricePixSelector,
+            priceCredit: priceCreditSelector,
+            soldOut: soldOutSelector,
+            endpoint: productEndpointSelector
+        }
+
+        const productInfoSelectors = getProductInfoSelelectors(productSelectors, listSize);
+
+        const productExtractionInfo: ProductExtractionI = {
+            puppeteerClass: page,
+            extractionData: productInfoSelectors,
+            chunkSize: PRODUCT_SELECTOR_CHUNK_SIZE,
+            extractFunction: extractProductData
+        }
+
+        const result = await executeExtractionTask(productExtractionInfo);
+
+        await page.close();
+
+        return result;
+
+    } catch (err: any) {
+        err.url = pageInfo.url;
+        throw err;
     }
-
-    const productInfoSelectors = getProductInfoSelelectors(productSelectors, listSize);
-
-    const productExtractionInfo: ProductExtractionI = {
-        puppeteerClass: page,
-        extractionData: productInfoSelectors,
-        chunkSize: PRODUCT_SELECTOR_CHUNK_SIZE,
-        extractFunction: extractProductData 
-    }
-
-    const result = await executeExtractionTask(productExtractionInfo);
-
-    await page.close();
-
-    return result;
 }
 
 async function extractProductData(page: Page, productSelectors: ProductSelectorsI){
-    let resultObj: ExtractedProductSelectorsI = { };
+    try {
+        let resultObj: ExtractedProductSelectorsI = {};
 
-    for(const [key, selector] of Object.entries(productSelectors)){
-        switch (key){
-            case "soldOut":
-                const isSoldOut = await getElementText(page,selector);
-                if(isSoldOut) resultObj[key] = true;
-                else resultObj[key] = false;
-                break;
-            case "endpoint":
-                resultObj[key] = await getElementHref(page, selector);
-                break;
-            default:
-                resultObj[key] = await getElementText(page, selector);
-                break;
+        for (const [key, selector] of Object.entries(productSelectors)) {
+            switch (key) {
+                case "soldOut":
+                    const isSoldOut = await getElementText(page, selector);
+                    if (isSoldOut) resultObj[key] = true;
+                    else resultObj[key] = false;
+                    break;
+                case "endpoint":
+                    resultObj[key] = await getElementHref(page, selector);
+                    break;
+                default:
+                    resultObj[key] = await getElementText(page, selector);
+                    break;
+            }
         }
-    } 
 
-    return resultObj;
+        return resultObj;
+
+    } catch (err: any) {
+        err.productSelectors = productSelectors;
+        throw err;
+    }
+
 }
 
 //Mudar funcao para agregar mais informacao ao objeto do produto
@@ -277,7 +305,7 @@ async function getElementText(page: Page, textSelector: string): Promise<string>
     }, textSelector);
 
     if(!text){
-        // console.error("Information about product not found. Text selector: " + textSelector + " - URL: " + page.url());
+        // console.log("Information about product not found. Text selector: " + textSelector + " - URL: " + page.url());
         return "";
     } 
 
@@ -297,7 +325,7 @@ async function getElementHref(page: Page, urlSelector: string): Promise<string>{
     }, urlSelector);
 
     if(!href){
-        console.error("Product href not found. Product Url Selector: " + urlSelector + " - URL: " + page.url());
+        console.log("Product href not found. Product Url Selector: " + urlSelector + " - URL: " + page.url());
         return "";
     } 
 
@@ -306,37 +334,43 @@ async function getElementHref(page: Page, urlSelector: string): Promise<string>{
 
 
 async function getNumPages(browser: Browser, siteInfo:any): Promise<number> {
-    const page = await browser.newPage();
-    await page.setViewport({
-        width: 1600,
-        height: 1200,
-    });
+    try {
+        const page = await browser.newPage();
+        await page.setViewport({
+            width: 1600,
+            height: 1200,
+        });
 
-    //Blocking image, font and styles requests to improve performance
-    await page.setRequestInterception(true);
-    page.on('request', req => {
-        if(["stylesheet", "font", "image"].includes(req.resourceType()))
+        //Blocking image, font and styles requests to improve performance
+        await page.setRequestInterception(true);
+        page.on('request', req => {
+            if (["stylesheet", "font", "image"].includes(req.resourceType()))
             req.abort();
-        else
+            else
             req.continue();
-    })
+        })
 
-    const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector} = siteInfo;
+        const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
 
-    const initialUrl = extractUrl.replace("PAGE_NUM", "1");
-    await page.goto(initialUrl, {waitUntil: "domcontentloaded"});
+        const initialUrl = extractUrl.replace("PAGE_NUM", "1");
+        await page.goto(initialUrl, { waitUntil: "domcontentloaded" });
 
-    let numPages;
-    if (numProductSelectorType === "pagination") {
-        numPages = await getPaginationNumber(page, numProductSelector);
-    }else if(numProductSelectorType === "total"){
-        const numProductPerPage = await listLength(page, productCardSelector);
-        numPages = await getProductsCountNumber(page, numProductSelector, numProductPerPage);
+        let numPages;
+        if (numProductSelectorType === "pagination") {
+            numPages = await getPaginationNumber(page, numProductSelector);
+        } else if (numProductSelectorType === "total") {
+            const numProductPerPage = await listLength(page, productCardSelector);
+            numPages = await getProductsCountNumber(page, numProductSelector, numProductPerPage);
+        }
+
+        await page.close();
+
+        return numPages!;
+
+    } catch(err: any){
+        console.error("Error getting number of pages.");
+        throw err;
     }
-
-    await page.close();
-
-    return numPages!;
 }
 
 async function getPaginationNumber(page: Page, numProductSelector: string): Promise<number> {
