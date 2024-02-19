@@ -1,0 +1,51 @@
+Função: Catalogo
+Descricao: Catalogar produtos dos sites
+MySQL table: catalog
+Colunas a adicionar na tabela: 
+{
+    _id: abc,
+    name: Placa de Vídeo RTX 4070 1-Click OC 2X Black PCI-E Galax NVIDIA GeForce, 12GB GDDR6X, DLSS, G-Sync, Ray Tracing, 192 bits - 47NOM7MD8DDF,
+    url: https://www.kabum.com.br/produto/473907/placa-de-video-rtx-4070-1-click-oc-2x-black-pci-e-galax-nvidia-geforce-12gb-gddr6x-dlss-g-sync-ray-tracing-192-bits-47nom7md8ddf,
+    site: Kabum,
+    tipo: GPU
+}
+
+Função: Fill Catalogo
+Descricao: Complementar a tabela "catalog" com informações uteis sobre o produto. Rodar logo apos Funcao Catalogo
+Condicao: Acionada somente quando ha produtos novos
+MySQL table: catalog
+Colunas a adicionar na tabela: 
+{
+    marca: GALAX,
+    modelo: 47NOM7MD7QOC,
+    garantia: 12 meses de garantia,
+    vram: 12gb,
+    sgram: GDDR6X,
+    familia: RTX 4070,
+}
+
+Model tabela catalog:
+{
+    _id: abc,
+    name: Placa de Vídeo RTX 4070 1-Click OC 2X Black PCI-E Galax NVIDIA GeForce, 12GB GDDR6X, DLSS, G-Sync, Ray Tracing, 192 bits - 47NOM7MD8DDF,
+    url: https://www.kabum.com.br/produto/473907/placa-de-video-rtx-4070-1-click-oc-2x-black-pci-e-galax-nvidia-geforce-12gb-gddr6x-dlss-g-sync-ray-tracing-192-bits-47nom7md8ddf,
+    site: Kabum,
+    tipo: GPU,
+    marca: GALAX,
+    modelo: 47NOM7MD7QOC,
+    garantia: 12 meses de garantia,
+    vram: 12gb,
+    sgram: GDDR6X,
+    familia: RTX 4070,
+}
+
+Função: Precos dos produtos
+Descricao: Coletar informacoes dos precos dos produtos
+MySQL table: gpu.product.price
+Colunas a adicionar na tabela: 
+{
+    _id: ...,
+    catolog_id: abc, 
+    pix: R$ 3.999,99,
+    parcelado: R$ 4.210,52
+}
