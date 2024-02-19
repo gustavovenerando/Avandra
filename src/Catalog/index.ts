@@ -60,7 +60,10 @@ class Catalog{
     constructor(
         @inject(TaskExecution) private taskExecution:TaskExecution,
         @inject(ElemExtraction) private elemExtraction:ElemExtraction,
-    ){}
+    ){
+        this.extracPageData = this.extracPageData.bind(this);
+        this.extractProductData = this.extractProductData.bind(this);
+    }
 
     async execute() {
         try {
@@ -120,7 +123,8 @@ class Catalog{
         return pagesInfo;
     }
 
-    extracPageData = async (browser: Browser, pageInfo: any): Promise<any[]> =>{
+    // extracPageData = async (browser: Browser, pageInfo: any): Promise<any[]> =>{
+    async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
         try {
             const {
                 url,
@@ -181,7 +185,7 @@ class Catalog{
         }
     }
 
-    extractProductData = async (page: Page, productSelectors: ProductSelectorsI) => {
+    async extractProductData(page: Page, productSelectors: ProductSelectorsI){
         try {
             let resultObj: ExtractedProductSelectorsI = {};
 
