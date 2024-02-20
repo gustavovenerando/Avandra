@@ -49,3 +49,11 @@ Colunas a adicionar na tabela:
     pix: R$ 3.999,99,
     parcelado: R$ 4.210,52
 }
+
+
+
+Pontos a melhorar:
+- Funcao primeiro define quantidade de paginas um site por vez antes de comecar o scrapping, poderia fazer todos os sites simultaneamente.
+  Outro problema desta funcao(getNums) eh o codigo duplicado com extracPageData.
+- Melhorar como informacoes comuns evitem de ser pasados entre funcoes, como o caso de site: kabum, tipo: gpu e baseUrl
+  evitando que passem por funcoes de processamento de selectors como extractProductData e getProductInfoSelelectors

@@ -1,15 +1,11 @@
 import { Browser, Page } from "puppeteer";
-import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ProductSelectorsI } from "./interface";
+import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI } from "./interface";
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
 import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../global";
 import Puppeteer from "../Puppeteer";
 
-//TO-DO: add novos sites
-//TO-DO: add novos selectors para preco parcelado, preco a vista e link do produto
-//TO-DO: add tratativa regex para conseguir o modelo do produto do titulo
-//TO-DO: Modelar estrutura do banco e tabelas (MySql)
 @injectable()
 class Catalog{
     constructor(
@@ -66,7 +62,6 @@ class Catalog{
 
         const pagesInfo = [];
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        // for (let pageNum = 1; pageNum <= 1; pageNum++) {
             const url = extractUrl.replace("PAGE_NUM", `${pageNum}`);
             pagesInfo.push({url, ...productSelectors});
         }
@@ -74,15 +69,15 @@ class Catalog{
         return pagesInfo;
     }
 
-    // extracPageData = async (browser: Browser, pageInfo: any): Promise<any[]> =>{
     async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
         try {
             const {
                 url,
+                baseUrl,
+                site,
+                type,
                 productNameSelector,
                 productCardSelector,
-                pricePixSelector,
-                priceCreditSelector,
                 productEndpointSelector,
                 soldOutSelector
             } = pageInfo;
@@ -107,15 +102,16 @@ class Catalog{
             const listSize = await this.elemExtraction.listLength(page, productCardSelector);
             console.log("List size: ", listSize, "- URL: ", url);
 
-            const productSelectors: ProductSelectorsI = {
+            const extractProductInfo: ExtractProductInfoI = {
                 name: productNameSelector,
-                pricePix: pricePixSelector,
-                priceCredit: priceCreditSelector,
                 soldOut: soldOutSelector,
-                endpoint: productEndpointSelector
+                endpoint: productEndpointSelector,
+                baseUrl,
+                site,
+                type
             }
 
-            const productInfoSelectors = this.getProductInfoSelelectors(productSelectors, listSize);
+            const productInfoSelectors = this.getProductInfoSelelectors(extractProductInfo, listSize);
 
             const productExtractionInfo: ProductExtractionI = {
                 puppeteerClass: page,
@@ -136,39 +132,43 @@ class Catalog{
         }
     }
 
-    async extractProductData(page: Page, productSelectors: ProductSelectorsI){
+    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI){
         try {
             let resultObj: ExtractedProductSelectorsI = {};
+            const { baseUrl, site, type, ...productSelectors } = extractProductInfo;
 
             for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
                     case "soldOut":
                         const isSoldOut = await this.elemExtraction.getText(page, selector);
-                        if (isSoldOut) resultObj[key] = true;
-                        else resultObj[key] = false;
+                        resultObj[key] = !!isSoldOut;
                         break;
                     case "endpoint":
-                        resultObj[key] = await this.elemExtraction.getHref(page, selector);
+                        const endpoint = await this.elemExtraction.getHref(page, selector);
+                        if(endpoint.includes("http")) resultObj["url"] = endpoint;
+                        else resultObj["url"] = baseUrl + endpoint;
                         break;
                     default:
                         resultObj[key] = await this.elemExtraction.getText(page, selector);
                         break;
                 }
+                resultObj.site = site;
+                resultObj.type = type;
             }
             return resultObj;
 
         } catch (err: any) {
-            err.productSelectors = productSelectors;
+            err.productSelectors = extractProductInfo;
             throw err;
         }
     }
 
-    getProductInfoSelelectors(productSelectors: ProductSelectorsI, listSize: number): any[]{
+    getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[]{
         const productInfoSelectors = [];
         for (let i = 1; i <= listSize; i++) {
-            const filledProductSelectors: ProductSelectorsI = {};
+            const filledProductSelectors: ExtractProductInfoI = {};
 
-            for(const [key, selector] of Object.entries(productSelectors)){
+            for(const [key, selector] of Object.entries(extractProductInfo)){
                 if(!selector) continue;
                 filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
             }

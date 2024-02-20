@@ -11,10 +11,10 @@ export interface ExtractPageDataI{
 }
 
 export interface ExtractProductDataI{
-    (page: Page, productSelectors: ProductSelectorsI): Promise<ExtractedProductSelectorsI>;
+    (page: Page, productSelectors: ExtractProductInfoI): Promise<ExtractedProductSelectorsI>;
 }
 
-export interface ProductSelectorsI {
+export interface ExtractProductInfoI {
     [key: string]: string
 }
 

@@ -4,6 +4,7 @@ export const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 export const siteArr = [
     {
         site: "pichau",
+        type: "gpu",
         numProductSelectorType: "total",
         extractUrl: "https://www.pichau.com.br/hardware/placa-de-video?page=PAGE_NUM",
         baseUrl: "https://www.pichau.com.br",
@@ -17,6 +18,7 @@ export const siteArr = [
     },
     {
         site: "kabum",
+        type: "gpu",
         numProductSelectorType: "total",
         extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
         baseUrl: "https://www.kabum.com.br",
@@ -30,6 +32,7 @@ export const siteArr = [
     },
     {
         site: "gkinfostore",
+        type: "gpu",
         numProductSelectorType: "pagination",
         extractUrl: "https://www.gkinfostore.com.br/placa-de-video?pagina=PAGE_NUM",
         baseUrl: "https://www.gkinfostore.com.br",
