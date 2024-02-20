@@ -1,15 +1,10 @@
-import {Browser, Page, BrowserContext} from "puppeteer";
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
+import { Browser, Page } from "puppeteer";
 import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ProductSelectorsI } from "./interface";
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
-import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr} from "../global";
-
-puppeteer.use(StealthPlugin());
-puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
+import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../global";
+import Puppeteer from "../Puppeteer";
 
 //TO-DO: add novos sites
 //TO-DO: add novos selectors para preco parcelado, preco a vista e link do produto
@@ -20,6 +15,7 @@ class Catalog{
     constructor(
         @inject(TaskExecution) private taskExecution:TaskExecution,
         @inject(ElemExtraction) private elemExtraction:ElemExtraction,
+        @inject(Puppeteer) private puppeteer:Puppeteer,
     ){
         this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
@@ -27,7 +23,7 @@ class Catalog{
 
     async execute() {
         try {
-            const browser = await puppeteer.launch({
+            const browser = await this.puppeteer.puppeteer.launch({
                 headless: false,
                 args: ["--no-sandbox"]
             });
