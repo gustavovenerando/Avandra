@@ -23,7 +23,7 @@ class Catalog{
 
     async execute() {
         try {
-            const browser = await this.puppeteer.puppeteer.launch({
+            const browser = await this.puppeteer.puppeteerExtra.launch({
                 headless: false,
                 args: ["--no-sandbox"]
             });

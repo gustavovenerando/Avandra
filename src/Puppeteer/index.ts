@@ -6,10 +6,10 @@ import { injectable } from "inversify";
 
 @injectable()
 class Puppeteer{
-    puppeteer: PuppeteerExtra;
+    puppeteerExtra: PuppeteerExtra;
 
     constructor(){
-        this.puppeteer = this.initialization();
+        this.puppeteerExtra = this.initialization();
     }
 
     initialization(){
