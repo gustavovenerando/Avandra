@@ -45,3 +45,12 @@ export const siteArr = [
         productEndpointSelector: '#corpo #listagemProdutos > ul > li:nth-child(INDEX) .info-produto > a',
     },
 ]
+
+export const mysqlConfig = {
+    host: process.env.MYSQL_HOST || '',
+    port: process.env.MYSQL_PORT || '',
+    name: process.env.MYSQL_DB_NAME || '',
+    user: process.env.MYSQL_USER || '',
+    password: process.env.MYSQL_PASSWORD || '',
+    dialect: process.env.MYSQL_DIALECT || '',
+}

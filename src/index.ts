@@ -1,3 +1,4 @@
+import "dotenv/config"
 import container from "../container"
 import Catalog from "./Catalog"
 
