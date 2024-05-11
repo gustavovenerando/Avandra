@@ -1,3 +1,5 @@
+import { memoryUsage } from "process";
+
 export const PAGE_INFO_CHUNK_SIZE = 10;
 export const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 
@@ -46,7 +48,7 @@ export const siteArr = [
     },
 ]
 
-export const mysqlConfig = {
+export const mysqlMain = {
     host: process.env.MYSQL_HOST || '',
     port: process.env.MYSQL_PORT || '',
     name: process.env.MYSQL_DB_NAME || '',
@@ -54,3 +56,5 @@ export const mysqlConfig = {
     password: process.env.MYSQL_PASSWORD || '',
     dialect: process.env.MYSQL_DIALECT || '',
 }
+
+export type MySqlConfigI = typeof mysqlMain;
