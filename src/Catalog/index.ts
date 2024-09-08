@@ -97,7 +97,7 @@ class Catalog{
                 req.continue();
             })
 
-            await page.goto(url, { waitUntil: "domcontentloaded" });
+            await page.goto(url, { waitUntil: "load" });
 
             const listSize = await this.elemExtraction.listLength(page, productCardSelector);
             console.log("List size: ", listSize, "- URL: ", url);
@@ -140,7 +140,7 @@ class Catalog{
             for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
                     case "soldOut":
-                        const isSoldOut = await this.elemExtraction.getText(page, selector);
+                        const isSoldOut = await this.elemExtraction.getText(page, selector, true);
                         resultObj[key] = !!isSoldOut;
                         break;
                     case "endpoint":
@@ -199,14 +199,17 @@ class Catalog{
             const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
 
             const initialUrl = extractUrl.replace("PAGE_NUM", "1");
-            await page.goto(initialUrl, { waitUntil: "domcontentloaded" });
+            await page.goto(initialUrl, { waitUntil: "load" });
 
             let numPages;
-            if (numProductSelectorType === "pagination") {
-                numPages = await this.getPaginationNumber(page, numProductSelector);
-            } else if (numProductSelectorType === "total") {
-                const numProductPerPage = await this.elemExtraction.listLength(page, productCardSelector);
-                numPages = await this.getProductsCountNumber(page, numProductSelector, numProductPerPage);
+            switch (numProductSelectorType) {
+                case "pagination":
+                    numPages = await this.getPaginationNumber(page, numProductSelector);
+                    break;
+                case "total":
+                    const numProductPerPage = await this.elemExtraction.listLength(page, productCardSelector);
+                    numPages = await this.getProductsCountNumber(page, numProductSelector, numProductPerPage);
+                    break;
             }
 
             await page.close();
@@ -239,7 +242,7 @@ class Catalog{
     async getProductsCountNumber(page: Page, numProductSelector: string, numProductPerPage: number): Promise<number> {
         const productsCountText = await this.elemExtraction.getText(page, numProductSelector);
 
-        if(!productsCountText) throw new Error("Products count text not found.");
+        if(!productsCountText) throw new Error(`Products count text not found. Selector: ${numProductSelector} - Page: ${page.url()}`);
 
         const num = Number(productsCountText.split(" ")[0]);
 

@@ -9,14 +9,17 @@ class ElemExtraction{
         }, productCardSelector);
     }
 
-    async getText(page: Page, textSelector: string): Promise<string>{
+    async getText(page: Page, textSelector: string, isSoldOut = false): Promise<string>{
         let text = await page.evaluate((selector) => {
             return document.querySelector(selector)?.textContent;
         }, textSelector);
 
         if(!text){
-            // console.log("Information about product not found. Text selector: " + textSelector + " - URL: " + page.url());
-            return "";
+            if(isSoldOut){
+                return "";
+            }
+            let errMsg = "Information about product not found. Text selector: " + textSelector + " - URL: " + page.url();
+            throw new Error(errMsg);
         } 
 
         text = text.trim();
