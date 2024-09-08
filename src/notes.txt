@@ -51,6 +51,7 @@ Colunas a adicionar na tabela:
     parcelado: R$ 4.210,52
 }
 
+read: https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
 
 
 Pontos a melhorar:

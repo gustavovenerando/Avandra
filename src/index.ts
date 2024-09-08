@@ -4,4 +4,4 @@ import Catalog from "./Catalog"
 import MySqlConnection from "./infra/database/mysql/connection"
 
 container.get(MySqlConnection).inicialize();
-// container.get(Catalog).execute();
+container.get(Catalog).execute();

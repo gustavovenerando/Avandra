@@ -6,6 +6,8 @@ services:
       "npm install && 
       node node_modules/puppeteer/install.mjs && 
       apt-get update && apt-get install -y 
+      ca-certificates
+      fonts-liberation
       libasound2 
       libatk-bridge2.0-0 
       libatk1.0-0 
@@ -39,7 +41,11 @@ services:
       libxrender1 
       libxshmfence1 
       libxss1 
-      libxtst6 && 
+      libxtst6
+      lsb-release
+      wget
+      xdg-utils
+      chromium && 
       npm start"
     ports:
       - 127.0.0.1:3000:3000
