@@ -5,16 +5,16 @@ import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 import { injectable } from "inversify";
 
 @injectable()
-class Puppeteer{
+class Puppeteer {
     puppeteerExtra: PuppeteerExtra;
 
-    constructor(){
+    constructor() {
         this.puppeteerExtra = this.initialization();
     }
 
-    initialization(){
+    initialization() {
         puppeteer.use(StealthPlugin());
-        puppeteer.use(AdblockerPlugin({ blockTrackers: true}));
+        puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
 
         return puppeteer;
     }

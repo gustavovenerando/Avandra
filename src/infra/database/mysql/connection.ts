@@ -4,7 +4,7 @@ import { mysqlMain } from "../../../global";
 import { Sequelize } from "sequelize";
 
 @injectable()
-class MySqlConnection{
+class MySqlConnection {
     // private static instance: MySqlConnection;
     //
     // static getInstance(){
@@ -17,16 +17,16 @@ class MySqlConnection{
 
     constructor(
         @inject(MySqlFactory) private mysqlFactory: MySqlFactory
-    ){}
+    ) { }
 
-    async inicialize(){
-        try{
+    async inicialize() {
+        try {
             this.mainConn = this.mysqlFactory.connection(mysqlMain);
             await this.mainConn.authenticate();
             console.log("Connection has been established successfully. Db name: ", mysqlMain.name);
         }
-        catch(err: any){
-            console.error("Unable to connect to the databese. Db name: ", 
+        catch (err: any) {
+            console.error("Unable to connect to the databese. Db name: ",
                 mysqlMain.name,
                 ". Error: ",
                 err,

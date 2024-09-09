@@ -7,12 +7,12 @@ import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../g
 import Puppeteer from "../Puppeteer";
 
 @injectable()
-class Catalog{
+class Catalog {
     constructor(
-        @inject(TaskExecution) private taskExecution:TaskExecution,
-        @inject(ElemExtraction) private elemExtraction:ElemExtraction,
-        @inject(Puppeteer) private puppeteer:Puppeteer,
-    ){
+        @inject(TaskExecution) private taskExecution: TaskExecution,
+        @inject(ElemExtraction) private elemExtraction: ElemExtraction,
+        @inject(Puppeteer) private puppeteer: Puppeteer,
+    ) {
         this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
     }
@@ -44,7 +44,7 @@ class Catalog{
         }
     }
 
-    async getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]>{
+    async getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]> {
         const sitesPagesInfo = [];
 
         for (let siteInfo of siteArr) {
@@ -57,13 +57,13 @@ class Catalog{
         return sitesPagesInfo;
     }
 
-    getSitePagesInfo(numPages: number, siteInfo: any): any[]{
+    getSitePagesInfo(numPages: number, siteInfo: any): any[] {
         const { extractUrl, ...productSelectors } = siteInfo;
 
         const pagesInfo = [];
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
             const url = extractUrl.replace("PAGE_NUM", `${pageNum}`);
-            pagesInfo.push({url, ...productSelectors});
+            pagesInfo.push({ url, ...productSelectors });
         }
 
         return pagesInfo;
@@ -92,9 +92,9 @@ class Catalog{
             await page.setRequestInterception(true);
             page.on('request', req => {
                 if (["stylesheet", "font", "image"].includes(req.resourceType()))
-                req.abort();
+                    req.abort();
                 else
-                req.continue();
+                    req.continue();
             })
 
             await page.goto(url, { waitUntil: "load" });
@@ -132,7 +132,7 @@ class Catalog{
         }
     }
 
-    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI){
+    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI) {
         try {
             let resultObj: ExtractedProductSelectorsI = {};
             const { baseUrl, site, type, ...productSelectors } = extractProductInfo;
@@ -145,7 +145,7 @@ class Catalog{
                         break;
                     case "endpoint":
                         const endpoint = await this.elemExtraction.getHref(page, selector);
-                        if(endpoint.includes("http")) resultObj["url"] = endpoint;
+                        if (endpoint.includes("http")) resultObj["url"] = endpoint;
                         else resultObj["url"] = baseUrl + endpoint;
                         break;
                     default:
@@ -163,13 +163,13 @@ class Catalog{
         }
     }
 
-    getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[]{
+    getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[] {
         const productInfoSelectors = [];
         for (let i = 1; i <= listSize; i++) {
             const filledProductSelectors: ExtractProductInfoI = {};
 
-            for(const [key, selector] of Object.entries(extractProductInfo)){
-                if(!selector) continue;
+            for (const [key, selector] of Object.entries(extractProductInfo)) {
+                if (!selector) continue;
                 filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
             }
 
@@ -179,7 +179,7 @@ class Catalog{
         return productInfoSelectors;
     }
 
-    async getNumPages(browser: Browser, siteInfo:any): Promise<number> {
+    async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
         try {
             const page = await browser.newPage();
             await page.setViewport({
@@ -191,9 +191,9 @@ class Catalog{
             await page.setRequestInterception(true);
             page.on('request', req => {
                 if (["stylesheet", "font", "image"].includes(req.resourceType()))
-                req.abort();
+                    req.abort();
                 else
-                req.continue();
+                    req.continue();
             })
 
             const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
@@ -216,7 +216,7 @@ class Catalog{
 
             return numPages!;
 
-        } catch(err: any){
+        } catch (err: any) {
             console.error("Error getting number of pages.");
             throw err;
         }
@@ -234,7 +234,7 @@ class Catalog{
             return lastPageElem.textContent;
         }, numProductSelector);
 
-        if(!paginationText) throw new Error("Pagination text not found.");
+        if (!paginationText) throw new Error("Pagination text not found.");
 
         return Number(paginationText);
     }
@@ -242,11 +242,11 @@ class Catalog{
     async getProductsCountNumber(page: Page, numProductSelector: string, numProductPerPage: number): Promise<number> {
         const productsCountText = await this.elemExtraction.getText(page, numProductSelector);
 
-        if(!productsCountText) throw new Error(`Products count text not found. Selector: ${numProductSelector} - Page: ${page.url()}`);
+        if (!productsCountText) throw new Error(`Products count text not found. Selector: ${numProductSelector} - Page: ${page.url()}`);
 
         const num = Number(productsCountText.split(" ")[0]);
 
-        return Math.ceil(num/numProductPerPage);
+        return Math.ceil(num / numProductPerPage);
     }
 }
 

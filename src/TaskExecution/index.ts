@@ -38,7 +38,7 @@ class TaskExecution {
     }
 
 
-    sliceArrayIntoChunks(arr:any[], chunkSize:number){
+    sliceArrayIntoChunks(arr: any[], chunkSize: number) {
         const chunks = []
         let i = 0
         const n = arr.length;

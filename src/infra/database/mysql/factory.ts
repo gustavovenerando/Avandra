@@ -3,7 +3,7 @@ import { Sequelize } from "sequelize";
 import { MySqlConfigI } from "../../../global";
 
 @injectable()
-class MySqlFactory{
+class MySqlFactory {
     connection(config: MySqlConfigI): Sequelize {
         const uri = this.uriMaker(config);
 
@@ -12,7 +12,7 @@ class MySqlFactory{
         return sequelizeConn;
     }
 
-    private uriMaker(config: MySqlConfigI): string{
+    private uriMaker(config: MySqlConfigI): string {
         const {
             dialect,
             name,
