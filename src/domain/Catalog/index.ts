@@ -3,7 +3,7 @@ import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, Extrac
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
-import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../global";
+import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../../global";
 import Puppeteer from "../Puppeteer";
 
 @injectable()
