@@ -1,4 +1,4 @@
-import {Page, Browser} from "puppeteer";
+import { Page, Browser } from "puppeteer";
 
 interface ExtractionI{
     readonly puppeteerClass: any;
@@ -6,11 +6,11 @@ interface ExtractionI{
     extractionData: string[]; 
 }
 
-export interface ExtractPageDataI{
+export interface ExtractPageDataI {
     (browser: Browser, pageInfo: any): Promise<any[]>;
 }
 
-export interface ExtractProductDataI{
+export interface ExtractProductDataI {
     (page: Page, productSelectors: ExtractProductInfoI): Promise<ExtractedProductSelectorsI>;
 }
 
@@ -22,10 +22,17 @@ export interface ExtractedProductSelectorsI {
     [key: string]: string | boolean
 }
 
-export interface PageExtractionI extends ExtractionI{
+export interface PageExtractionI extends ExtractionI {
     extractFunction: ExtractPageDataI;
 }
 
-export interface ProductExtractionI extends ExtractionI{
+export interface ProductExtractionI extends ExtractionI {
     extractFunction: ExtractProductDataI;
+}
+
+export interface ProductExtracted {
+    name: string;
+    url: string;
+    site: "kabum" | "pichau" | "gkinfostore";
+    type: string;
 }

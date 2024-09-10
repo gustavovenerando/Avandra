@@ -1,5 +1,3 @@
-import { memoryUsage } from "process";
-
 export const PAGE_INFO_CHUNK_SIZE = 10;
 export const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 

@@ -1,5 +1,5 @@
 import { Browser, Page } from "puppeteer";
-import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI } from "./interface";
+import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI, ProductExtracted } from "./interface";
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
@@ -17,12 +17,9 @@ class Product {
         this.extractProductData = this.extractProductData.bind(this);
     }
 
-    async extract() {
+    async extract(): Promise<ProductExtracted[] | undefined> {
         try {
-            const browser = await this.puppeteer.puppeteerExtra.launch({
-                headless: true,
-                args: ["--no-sandbox"]
-            });
+            const browser = await this.puppeteer.newBrowser();
 
             const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteArr);
 
@@ -33,14 +30,16 @@ class Product {
                 extractFunction: this.extracPageData
             }
 
-            const result = await this.taskExecution.executeExtraction(pageExtractionInfo);
+            const products = await this.taskExecution.executeExtraction(pageExtractionInfo);
 
-            console.log("Final Result: ", result);
+            console.log("Products extracted: ", products);
 
             await browser.close();
 
+            return products;
+
         } catch (err: any) {
-            console.error("Error extracting info. Error: ", err);
+            console.error("Error extracting products. Error: ", err);
         }
     }
 
@@ -82,22 +81,9 @@ class Product {
                 soldOutSelector
             } = pageInfo;
 
-            const page = await browser.newPage();
-            await page.setViewport({
-                width: 1600,
-                height: 1200,
-            });
+            const page = await this.puppeteer.gotoNewPage(browser, url);
 
-            //Blocking image, font and styles requests to improve performance
-            await page.setRequestInterception(true);
-            page.on('request', req => {
-                if (["stylesheet", "font", "image"].includes(req.resourceType()))
-                    req.abort();
-                else
-                    req.continue();
-            })
-
-            await page.goto(url, { waitUntil: "load" });
+            if(!page) throw new Error("Couldnt go to new page.");
 
             const listSize = await this.elemExtraction.listLength(page, productCardSelector);
             console.log("List size: ", listSize, "- URL: ", url);
@@ -181,25 +167,13 @@ class Product {
 
     async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
         try {
-            const page = await browser.newPage();
-            await page.setViewport({
-                width: 1600,
-                height: 1200,
-            });
-
-            //Blocking image, font and styles requests to improve performance
-            await page.setRequestInterception(true);
-            page.on('request', req => {
-                if (["stylesheet", "font", "image"].includes(req.resourceType()))
-                    req.abort();
-                else
-                    req.continue();
-            })
-
             const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
 
             const initialUrl = extractUrl.replace("PAGE_NUM", "1");
-            await page.goto(initialUrl, { waitUntil: "load" });
+
+            const page = await this.puppeteer.gotoNewPage(browser, initialUrl);
+
+            if(!page) throw new Error("Couldnt go to new page.");
 
             let numPages;
             switch (numProductSelectorType) {
