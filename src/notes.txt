@@ -1,5 +1,5 @@
-Função: Catalogo
-Descricao: Catalogar produtos dos sites
+Classe: Product
+Descricao: Extrair as infos basicas dos produtos dos sites
 MySQL table: catalog
 Colunas a adicionar na tabela: 
 {
@@ -10,8 +10,8 @@ Colunas a adicionar na tabela:
     tipo: GPU
 }
 
-Função: Fill Catalogo
-Descricao: Complementar a tabela "catalog" com informações uteis sobre o produto. Rodar logo apos Funcao Catalogo.
+Classe: Catalogo
+Descricao: Complementar a tabela "catalog" com informações uteis sobre o produto.
 Usar a url do produto.
 Condicao: Acionada somente quando ha produtos novos
 MySQL table: catalog
@@ -25,7 +25,7 @@ Colunas a adicionar na tabela:
     familia: RTX 4070,
 }
 
-Model tabela catalog:
+Model final da tabela catalog:
 {
     _id: abc,
     name: Placa de Vídeo RTX 4070 1-Click OC 2X Black PCI-E Galax NVIDIA GeForce, 12GB GDDR6X, DLSS, G-Sync, Ray Tracing, 192 bits - 47NOM7MD8DDF,
@@ -40,19 +40,20 @@ Model tabela catalog:
     familia: RTX 4070,
 }
 
-Função: Precos dos produtos
-Descricao: Coletar informacoes dos precos dos produtos
+Cron: Precos dos produtos
+Descricao: Ler tabela 'catalog' e coletar informacoes dos precos dos produtos preenchendo
+tabela 'product.price'
 MySQL table: gpu.product.price
 Colunas a adicionar na tabela: 
 {
     _id: ...,
     catolog_id: abc, 
     pix: R$ 3.999,99,
-    parcelado: R$ 4.210,52
+    parcelado: R$ 4.210,52,
+    createdAt: x
 }
 
 read: https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
-
 
 Pontos a melhorar:
 - Funcao primeiro define quantidade de paginas um site por vez antes de comecar o scrapping, poderia fazer todos os sites simultaneamente.
