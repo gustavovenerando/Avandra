@@ -1,3 +1,3 @@
-import {PageExtractionI, ProductExtractionI} from "../Catalog/interface";
+import {PageExtractionI, ProductExtractionI} from "../Product/interface";
 
 export type ExtractionInfoI = PageExtractionI | ProductExtractionI

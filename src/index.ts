@@ -1,7 +1,7 @@
 import "dotenv/config"
 import container from "./container"
-import Catalog from "./domain/Catalog"
+import Product from "./domain/Product"
 import MySqlConnection from "./infra/database/mysql/connection"
 
 container.get(MySqlConnection).inicialize();
-container.get(Catalog).execute();
+container.get(Product).extract();
