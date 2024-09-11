@@ -1,6 +1,15 @@
 export const PAGE_INFO_CHUNK_SIZE = 10;
 export const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 
+export const mysqlMain = {
+    host: process.env.MYSQL_HOST || '',
+    port: process.env.MYSQL_PORT || '',
+    name: process.env.MYSQL_DB_NAME || '',
+    user: process.env.MYSQL_USER || '',
+    password: process.env.MYSQL_PASSWORD || '',
+    dialect: process.env.MYSQL_DIALECT || '',
+}
+
 export const siteArr = [
     {
         site: "pichau",
@@ -26,7 +35,7 @@ export const siteArr = [
         productCardSelector : ".productCard",
         productNameSelector: '#listing main > div:nth-child(INDEX) .productLink .nameCard',
         pricePixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
-        priceCreditSelector: '',
+        priceCreditSelector: "",
         soldOutSelector: '#listing main > div:nth-child(INDEX) .productLink .unavailablePricesCard',
         productEndpointSelector: '#listing main > div:nth-child(INDEX) .productLink',
     },
@@ -46,13 +55,18 @@ export const siteArr = [
     },
 ]
 
-export const mysqlMain = {
-    host: process.env.MYSQL_HOST || '',
-    port: process.env.MYSQL_PORT || '',
-    name: process.env.MYSQL_DB_NAME || '',
-    user: process.env.MYSQL_USER || '',
-    password: process.env.MYSQL_PASSWORD || '',
-    dialect: process.env.MYSQL_DIALECT || '',
-}
+export const productDetailArr = [
+    {
+        site: "kabum",
+        pricePix: "",
+        priceCredit: "",
+        rms: "", //12 meses de garantia
+        vram: "", //12Gb
+        sram: "", //GGDR6X
+        brand: "", //ASRock
+        model: "", // AMD Radeon RX 6600 CLD 8G
+        serialId: ""// GA2RZZ-00UANF
+    },
+];
 
 export type MySqlConfigI = typeof mysqlMain;

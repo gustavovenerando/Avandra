@@ -1,7 +1,6 @@
 Classe: Product
 Descricao: Extrair as infos basicas dos produtos dos sites
-MySQL table: catalog
-Colunas a adicionar na tabela: 
+Informacoes extraidas dos produtos: 
 {
     _id: abc,
     name: Placa de Vídeo RTX 4070 1-Click OC 2X Black PCI-E Galax NVIDIA GeForce, 12GB GDDR6X, DLSS, G-Sync, Ray Tracing, 192 bits - 47NOM7MD8DDF,
@@ -11,11 +10,8 @@ Colunas a adicionar na tabela:
 }
 
 Classe: Catalogo
-Descricao: Complementar a tabela "catalog" com informações uteis sobre o produto.
-Usar a url do produto.
-Condicao: Acionada somente quando ha produtos novos
-MySQL table: catalog
-Colunas a adicionar na tabela: 
+Descricao: Montar a tabela "catalog" com informações detalhadas sobre os produtos.
+Informacoes detalhadas extraidas dos produtos: 
 {
     marca: GALAX,
     modelo: 47NOM7MD7QOC,
@@ -25,6 +21,7 @@ Colunas a adicionar na tabela:
     familia: RTX 4070,
 }
 
+MySQL table: catalog
 Model final da tabela catalog:
 {
     _id: abc,

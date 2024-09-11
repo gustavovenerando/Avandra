@@ -34,7 +34,7 @@ class TaskExecution {
             }
         }
 
-        return result;
+        return result.flat(Infinity);
     }
 
 
