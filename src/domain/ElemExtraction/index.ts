@@ -44,6 +44,33 @@ class ElemExtraction {
 
         return href;
     }
+
+    async getPaginationNumber(page: Page, numProductSelector: string): Promise<number> {
+        const paginationText = await page.evaluate((selector) => {
+            const paginationElem = document.querySelector(selector);
+            const paginagionChildren = paginationElem?.children;
+
+            if (!paginagionChildren) throw new Error("Pagination children not found");
+
+            const lastPageElem = paginagionChildren[paginagionChildren.length - 2];
+
+            return lastPageElem.textContent;
+        }, numProductSelector);
+
+        if (!paginationText) throw new Error("Pagination text not found.");
+
+        return Number(paginationText);
+    }
+
+    async getProductsCountNumber(page: Page, numProductSelector: string, numProductPerPage: number): Promise<number> {
+        const productsCountText = await this.getText(page, numProductSelector);
+
+        if (!productsCountText) throw new Error(`Products count text not found. Selector: ${numProductSelector} - Page: ${page.url()}`);
+
+        const num = Number(productsCountText.split(" ")[0]);
+
+        return Math.ceil(num / numProductPerPage);
+    }
 }
 
 export default ElemExtraction;

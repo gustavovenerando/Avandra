@@ -166,61 +166,30 @@ class Showcase {
     }
 
     async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
-        try {
-            const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
+        const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
 
-            const initialUrl = extractUrl.replace("PAGE_NUM", "1");
+        const initialUrl = extractUrl.replace("PAGE_NUM", "1");
 
-            const page = await this.puppeteer.gotoNewPage(browser, initialUrl);
+        const page = await this.puppeteer.gotoNewPage(browser, initialUrl);
 
-            if(!page) throw new Error("Couldnt go to new page.");
+        if(!page) throw new Error("Couldnt go to new page.");
 
-            let numPages;
-            switch (numProductSelectorType) {
-                case "pagination":
-                    numPages = await this.getPaginationNumber(page, numProductSelector);
-                    break;
-                case "total":
-                    const numProductPerPage = await this.elemExtraction.listLength(page, productCardSelector);
-                    numPages = await this.getProductsCountNumber(page, numProductSelector, numProductPerPage);
-                    break;
-            }
-
-            await page.close();
-
-            return numPages!;
-
-        } catch (err: any) {
-            console.error("Error getting number of pages.");
-            throw err;
+        let numPages;
+        switch (numProductSelectorType) {
+            case "pagination":
+                numPages = await this.elemExtraction.getPaginationNumber(page, numProductSelector);
+                break;
+            case "total":
+                const numProductPerPage = await this.elemExtraction.listLength(page, productCardSelector);
+                numPages = await this.elemExtraction.getProductsCountNumber(page, numProductSelector, numProductPerPage);
+                break;
         }
-    }
 
-    async getPaginationNumber(page: Page, numProductSelector: string): Promise<number> {
-        const paginationText = await page.evaluate((selector) => {
-            const paginationElem = document.querySelector(selector);
-            const paginagionChildren = paginationElem?.children;
+        await page.close();
 
-            if (!paginagionChildren) throw new Error("Pagination children not found");
+        if(!numPages) throw new Error("Couldnt get number of pages!");
 
-            const lastPageElem = paginagionChildren[paginagionChildren.length - 2];
-
-            return lastPageElem.textContent;
-        }, numProductSelector);
-
-        if (!paginationText) throw new Error("Pagination text not found.");
-
-        return Number(paginationText);
-    }
-
-    async getProductsCountNumber(page: Page, numProductSelector: string, numProductPerPage: number): Promise<number> {
-        const productsCountText = await this.elemExtraction.getText(page, numProductSelector);
-
-        if (!productsCountText) throw new Error(`Products count text not found. Selector: ${numProductSelector} - Page: ${page.url()}`);
-
-        const num = Number(productsCountText.split(" ")[0]);
-
-        return Math.ceil(num / numProductPerPage);
+        return numPages;
     }
 }
 
