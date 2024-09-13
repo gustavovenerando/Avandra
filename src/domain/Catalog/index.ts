@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import Product from "../Product";
+import Showcase from "../Product";
 import Puppeteer from "../Puppeteer";
 import TaskExecution from "../TaskExecution";
 import puppeteer, { Browser } from "puppeteer";
@@ -8,7 +8,7 @@ import { productDetailArr } from "../../global";
 @injectable()
 class Catalog {
     constructor(
-        @inject(Product) private product: Product,
+        @inject(Showcase) private showcase: Showcase,
         @inject(Puppeteer) private puppeteer: Puppeteer,
         @inject(TaskExecution) private taskExecution: TaskExecution,
     ) { 
@@ -19,31 +19,32 @@ class Catalog {
         try {
             //Com o banco, realizar processamento somente os produtos que nao tiverem no banco
             //Ou seja, sem os campos price, modelo etc...
-            const products = await this.product.extract();
+            //Filtrar os que nao estao soldOut
+            const products = await this.showcase.extract();
 
             if(!products) throw new Error("No products found!");
 
             const browser = await this.puppeteer.newBrowser();
 
             // Array de urls
-            const allProductDetailInfoData = products.map(elem => {
-                const x = productDetailArr.find(elem2 => elem2.site === elem.site)
+            const allProductDetailInfoData = products.map(product => {
+                const productDetail = productDetailArr.find(elem => elem.site === product.site)
                 return {
-                    ...elem,
-                    ...x
-                }
+                    ...product,
+                    ...productDetail
+                };
             });
 
             // console.log("==============>>>> Aloha: ", allProductDetailInfoData);
 
-            const pageExtractionInfo: any = {
+            const catalogExtractionInfo: any = {
                 puppeteerClass: browser,
                 extractionData: allProductDetailInfoData,
                 chunkSize: 10,
                 extractFunction: this.extractProductDetails
             };
 
-            // const aloha = await this.taskExecution.executeExtraction(pageExtractionInfo);
+            // const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
 
             await browser.close();
         } catch (err) {
@@ -53,10 +54,39 @@ class Catalog {
 
     async extractProductDetails(browser: Browser, productDetailInfo: any) {
         //Abrir uma pagina para cada url e extrair as infos
-        const { url, ...productDetailSelectors } = productDetailInfo;
-        const page = await this.puppeteer.gotoNewPage(browser, url);
-    }
+        const { url, soldOut, site, type, ...productDetailSelectors } = productDetailInfo;
 
+        try {
+            const page = await this.puppeteer.gotoNewPage(browser, url);
+
+            // Extrair info dos elementos html
+            let resultObj: any = {};
+
+            for (const [key, selector] of Object.entries(productDetailSelectors)) {
+                switch (key) {
+                    case "rms":
+                    // const isSoldOut = await this.elemExtraction.getText(page, selector, true);
+                    // resultObj[key] = !!isSoldOut;
+                    // break;
+                    case "vram":
+                    // const endpoint = await this.elemExtraction.getHref(page, selector);
+                    // if (endpoint.includes("http")) resultObj["url"] = endpoint;
+                    //     else resultObj["url"] = baseUrl + endpoint;
+                    // break;
+                    default:
+                        // resultObj[key] = await this.elemExtraction.getText(page, selector);
+                        break;
+                }
+                // resultObj.site = site;
+                // resultObj.type = type;
+            }
+            return resultObj;
+        }
+        catch (err: any) {
+            err.url = url;
+            throw err;
+        }
+    }
 }
 
 export default Catalog;

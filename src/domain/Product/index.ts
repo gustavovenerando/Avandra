@@ -7,7 +7,7 @@ import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../.
 import Puppeteer from "../Puppeteer";
 
 @injectable()
-class Product {
+class Showcase {
     constructor(
         @inject(TaskExecution) private taskExecution: TaskExecution,
         @inject(ElemExtraction) private elemExtraction: ElemExtraction,
@@ -224,4 +224,4 @@ class Product {
     }
 }
 
-export default Product;
+export default Showcase;

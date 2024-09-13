@@ -1,4 +1,4 @@
-export const PAGE_INFO_CHUNK_SIZE = 10;
+export const PAGE_INFO_CHUNK_SIZE = 20;
 export const PRODUCT_SELECTOR_CHUNK_SIZE = 50;
 
 export const mysqlMain = {
@@ -58,8 +58,6 @@ export const siteArr = [
 export const productDetailArr = [
     {
         site: "kabum",
-        pricePix: "",
-        priceCredit: "",
         rms: "", //12 meses de garantia
         vram: "", //12Gb
         sram: "", //GGDR6X

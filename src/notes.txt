@@ -41,7 +41,7 @@ Cron: Precos dos produtos
 Descricao: Ler tabela 'catalog' e coletar informacoes dos precos dos produtos preenchendo
 tabela 'product.price'
 MySQL table: gpu.product.price
-Colunas a adicionar na tabela: 
+Colunas a adicionar na tabela: D
 {
     _id: ...,
     catolog_id: abc, 
@@ -50,10 +50,10 @@ Colunas a adicionar na tabela:
     createdAt: x
 }
 
-read: https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md
-
 Pontos a melhorar:
 - Funcao primeiro define quantidade de paginas um site por vez antes de comecar o scrapping, poderia fazer todos os sites simultaneamente.
   Outro problema desta funcao(getNums) eh o codigo duplicado com extracPageData.
 - Melhorar como informacoes comuns evitem de ser pasados entre funcoes, como o caso de site: kabum, tipo: gpu e baseUrl
   evitando que passem por funcoes de processamento de selectors como extractProductData e getProductInfoSelelectors
+
+Gera url de todas as paginas das "vitrines" ===> De 10 em 10 pags, para cada pagina, gera os selectors da pagina (de acordo com a quantidade de itens que a pagina possui) ===> De 50 em 50, extrai os itens da pagina
