@@ -57,8 +57,6 @@ class Catalog {
         }
     }
 
-    //Na global, juntar todas as variaveis em um unico array, ja separando os selectors entre showcase, catalog e price
-    //Ja fazendo as mudancas necessaria nestas classes para receber este novo obj
     async extractProductDetails(browser: Browser, productDetailInfo: any) {
         //Abrir uma pagina para cada url e extrair as infos
         const { url, soldOut, site, catalogSelectors } = productDetailInfo;
@@ -66,7 +64,6 @@ class Catalog {
         try {
             const page = await this.puppeteer.gotoNewPage(browser, url);
 
-            // Extrair info dos elementos html
             let resultObj: any = {};
 
             for (const [key, selector] of Object.entries(catalogSelectors)) {
@@ -84,7 +81,7 @@ class Catalog {
                         // resultObj[key] = await this.elemExtraction.getText(page, selector);
                         break;
                 }
-                // resultObj.site = site;
+                resultObj.site = site;
                 // resultObj.type = type;
             }
             return resultObj;

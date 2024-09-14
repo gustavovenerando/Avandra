@@ -30,7 +30,7 @@ export const siteArr = [
         },
         catalog: {
             selectors: {
-                rms: "", //12 meses de garantia
+                warranty: "", //12 meses de garantia
                 vram: "", //12Gb
                 sram: "", //GGDR6X
                 brand: "", //ASRock
@@ -57,13 +57,21 @@ export const siteArr = [
             }
         },
         catalog: {
+            nameRegex: {
+                model: "/(?<= - ).*/", // GA2RZZ-00UANF (Positive Lookbehind regex)
+                vram: "/[0-9]*GB/i", //12Gb
+                sram: "/[a-z]?DDR[0-9a-z]+/i", //GDDR6X
+                family: "/(RT|GT|RX)(.+?(Super|Ti|XT))?(.+?([0-9]+)?)/i", //RTX 4070ti [GT(x), RT(x), RX]
+            },
             selectors: {
-                rms: "", //12 meses de garantia
-                vram: "", //12Gb
-                sram: "", //GGDR6X
-                brand: "", //ASRock
-                model: "", // AMD Radeon RX 6600 CLD 8G
-                serialId: ""// GA2RZZ-00UANF
+                warranty: '#technicalInfoSection div[data-testid="InfoGarantia"] > div:nth-child(2)', //12 meses de garantia
+                brand: "#technicalInfoSection div > div > div > p:nth-child(2)", //Marca: ASRock
+            }
+        },
+        price: {
+            selectors: {
+                pix: "#container-purchase .finalPrice",
+                credit: "#container-purchase .regularPrice",
             }
         }
     },
@@ -86,7 +94,7 @@ export const siteArr = [
         },
         catalog: {
             selectors: {
-                rms: "", //12 meses de garantia
+                warranty: "", //12 meses de garantia
                 vram: "", //12Gb
                 sram: "", //GGDR6X
                 brand: "", //ASRock
@@ -99,7 +107,7 @@ export const siteArr = [
 
 export const productDetailArr = [
     {
-        rms: "", //12 meses de garantia
+        warranty: "", //12 meses de garantia
         vram: "", //12Gb
         sram: "", //GGDR6X
         brand: "", //ASRock
