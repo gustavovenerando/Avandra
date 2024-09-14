@@ -2,8 +2,8 @@ import { inject, injectable } from "inversify";
 import Showcase from "../Product";
 import Puppeteer from "../Puppeteer";
 import TaskExecution from "../TaskExecution";
-import puppeteer, { Browser } from "puppeteer";
-import { productDetailArr } from "../../global";
+import { Browser } from "puppeteer";
+import { siteArr } from "../../global";
 
 @injectable()
 class Catalog {
@@ -28,21 +28,26 @@ class Catalog {
 
             // Array de urls
             const allProductDetailInfoData = products.map(product => {
-                const productDetail = productDetailArr.find(elem => elem.site === product.site)
+                const siteInfo = siteArr.find(elem => elem.site === product.site);
+
+                if(!siteInfo) return;
+
+                const { catalog: { selectors: catalogSelectors } } = siteInfo;
+
                 return {
                     ...product,
-                    ...productDetail
+                    catalogSelectors
                 };
             });
 
             // console.log("==============>>>> Aloha: ", allProductDetailInfoData);
 
-            const catalogExtractionInfo: any = {
-                puppeteerClass: browser,
-                extractionData: allProductDetailInfoData,
-                chunkSize: 10,
-                extractFunction: this.extractProductDetails
-            };
+            // const catalogExtractionInfo: any = {
+            //     puppeteerClass: browser,
+            //     extractionData: allProductDetailInfoData,
+            //     chunkSize: 10,
+            //     extractFunction: this.extractProductDetails
+            // };
 
             // const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
 
@@ -52,9 +57,11 @@ class Catalog {
         }
     }
 
+    //Na global, juntar todas as variaveis em um unico array, ja separando os selectors entre showcase, catalog e price
+    //Ja fazendo as mudancas necessaria nestas classes para receber este novo obj
     async extractProductDetails(browser: Browser, productDetailInfo: any) {
         //Abrir uma pagina para cada url e extrair as infos
-        const { url, soldOut, site, type, ...productDetailSelectors } = productDetailInfo;
+        const { url, soldOut, site, catalogSelectors } = productDetailInfo;
 
         try {
             const page = await this.puppeteer.gotoNewPage(browser, url);
@@ -62,7 +69,7 @@ class Catalog {
             // Extrair info dos elementos html
             let resultObj: any = {};
 
-            for (const [key, selector] of Object.entries(productDetailSelectors)) {
+            for (const [key, selector] of Object.entries(catalogSelectors)) {
                 switch (key) {
                     case "rms":
                     // const isSoldOut = await this.elemExtraction.getText(page, selector, true);

@@ -57,12 +57,12 @@ class Showcase {
     }
 
     getSitePagesInfo(numPages: number, siteInfo: any): any[] {
-        const { extractUrl, ...productSelectors } = siteInfo;
+        const { site, baseUrl, showcase: { extractUrl, selectors: showCaseSelectors } } = siteInfo;
 
         const pagesInfo = [];
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
             const url = extractUrl.replace("PAGE_NUM", `${pageNum}`);
-            pagesInfo.push({ url, ...productSelectors });
+            pagesInfo.push({ site, url, baseUrl, showCaseSelectors });
         }
 
         return pagesInfo;
@@ -70,16 +70,14 @@ class Showcase {
 
     async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
         try {
+            const { site, url, baseUrl, showCaseSelectors } = pageInfo;
+
             const {
-                url,
-                baseUrl,
-                site,
-                type,
                 productNameSelector,
                 productCardSelector,
                 productEndpointSelector,
                 soldOutSelector
-            } = pageInfo;
+            } = showCaseSelectors;
 
             const page = await this.puppeteer.gotoNewPage(browser, url);
 
@@ -93,8 +91,7 @@ class Showcase {
                 soldOut: soldOutSelector,
                 endpoint: productEndpointSelector,
                 baseUrl,
-                site,
-                type
+                site
             }
 
             const productInfoSelectors = this.getProductInfoSelelectors(extractProductInfo, listSize);
@@ -121,7 +118,7 @@ class Showcase {
     async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI) {
         try {
             let resultObj: ExtractedProductSelectorsI = {};
-            const { baseUrl, site, type, ...productSelectors } = extractProductInfo;
+            const { site, baseUrl, ...productSelectors } = extractProductInfo;
 
             for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
@@ -139,7 +136,6 @@ class Showcase {
                         break;
                 }
                 resultObj.site = site;
-                resultObj.type = type;
             }
             return resultObj;
 
@@ -166,7 +162,8 @@ class Showcase {
     }
 
     async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
-        const { extractUrl, numProductSelectorType, numProductSelector, productCardSelector } = siteInfo;
+        const { showcase: { extractUrl, selectors } } = siteInfo;
+        const { numProductSelectorType, numProductSelector, productCardSelector } = selectors;
 
         const initialUrl = extractUrl.replace("PAGE_NUM", "1");
 
