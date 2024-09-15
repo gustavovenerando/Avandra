@@ -4,6 +4,8 @@ import Puppeteer from "../Puppeteer";
 import TaskExecution from "../TaskExecution";
 import { Browser } from "puppeteer";
 import { siteArr } from "../../global";
+import ElemExtraction from "../ElemExtraction";
+import { CatalogProductI, ProductDetailInfoI } from "./interface";
 
 @injectable()
 class Catalog {
@@ -11,6 +13,7 @@ class Catalog {
         @inject(Showcase) private showcase: Showcase,
         @inject(Puppeteer) private puppeteer: Puppeteer,
         @inject(TaskExecution) private taskExecution: TaskExecution,
+        @inject(ElemExtraction) private elemExtraction: ElemExtraction
     ) { 
         this.extractProductDetails = this.extractProductDetails.bind(this);
     }
@@ -32,24 +35,32 @@ class Catalog {
 
                 if(!siteInfo) return;
 
-                const { catalog: { selectors: catalogSelectors } } = siteInfo;
+                const { catalog } = siteInfo;
 
                 return {
                     ...product,
-                    catalogSelectors
+                    catalog
                 };
             });
 
+            if(!allProductDetailInfoData || !allProductDetailInfoData.length){
+                throw new Error("Couldnt make catalog processing. No data available.");
+            }
+
             // console.log("==============>>>> Aloha: ", allProductDetailInfoData);
 
-            // const catalogExtractionInfo: any = {
-            //     puppeteerClass: browser,
-            //     extractionData: allProductDetailInfoData,
-            //     chunkSize: 10,
-            //     extractFunction: this.extractProductDetails
-            // };
+            const catalogExtractionInfo: any = {
+                puppeteerClass: browser,
+                extractionData: allProductDetailInfoData,
+                chunkSize: 10,
+                extractFunction: this.extractProductDetails
+            };
 
-            // const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
+            console.log("=======>> Starting process");
+
+            const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
+
+            console.log("=======>> Final result: ", aloha);
 
             await browser.close();
         } catch (err) {
@@ -57,38 +68,53 @@ class Catalog {
         }
     }
 
-    async extractProductDetails(browser: Browser, productDetailInfo: any) {
+    async extractProductDetails(browser: Browser, productDetailInfo: ProductDetailInfoI): Promise<CatalogProductI> {
         //Abrir uma pagina para cada url e extrair as infos
-        const { url, soldOut, site, catalogSelectors } = productDetailInfo;
+        const { url, name, soldOut, site, catalog: { nameRegex, selectors } } = productDetailInfo;
+
+        const page = await this.puppeteer.gotoNewPage(browser, url);
 
         try {
-            const page = await this.puppeteer.gotoNewPage(browser, url);
+            if(!page) throw new Error("Couldnt go to new page.");
 
-            let resultObj: any = {};
+            if(!selectors) throw new Error("Couldnt find caltalog selectors!");
 
-            for (const [key, selector] of Object.entries(catalogSelectors)) {
+            let resultObj: any = { };
+
+            if (nameRegex) {
+                for (const [key, regex] of Object.entries(nameRegex)) {
+                    const foundMatch = name.match(regex);
+
+                    if (!foundMatch) resultObj[key] = "";
+                    else resultObj[key] = foundMatch[0];
+                }
+            }
+
+            for (const [key, selector] of Object.entries(selectors)) {
                 switch (key) {
-                    case "rms":
-                    // const isSoldOut = await this.elemExtraction.getText(page, selector, true);
-                    // resultObj[key] = !!isSoldOut;
-                    // break;
-                    case "vram":
-                    // const endpoint = await this.elemExtraction.getHref(page, selector);
-                    // if (endpoint.includes("http")) resultObj["url"] = endpoint;
-                    //     else resultObj["url"] = baseUrl + endpoint;
-                    // break;
+                    case "brand":
+                        let brand = await this.elemExtraction.getText(page, selector);
+                        if(site === 'kabum') brand = brand.split(":")[1].trim();  
+                        resultObj[key] = brand;
+                        break;
                     default:
-                        // resultObj[key] = await this.elemExtraction.getText(page, selector);
+                        resultObj[key] = await this.elemExtraction.getText(page, selector);
                         break;
                 }
-                resultObj.site = site;
-                // resultObj.type = type;
             }
+
+            resultObj.site = site;
+            resultObj.soldOut = soldOut;
+            resultObj.url = url;
+
+            console.log("=====> Result: ", resultObj);
+
             return resultObj;
-        }
-        catch (err: any) {
+        } catch (err: any) {
             err.url = url;
             throw err;
+        } finally {
+            await page.close();
         }
     }
 }

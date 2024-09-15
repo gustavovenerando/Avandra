@@ -22,7 +22,7 @@ class Puppeteer {
 
     async newBrowser(): Promise<Browser> {
         const browser = await this.puppeteerExtra.launch({
-            headless: true,
+            headless: false,
             args: ["--no-sandbox"]
         });
 

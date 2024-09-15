@@ -1,5 +1,5 @@
 import { Browser, Page } from "puppeteer";
-import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI, ProductExtracted } from "./interface";
+import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI, ProductExtractedI } from "./interface";
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
@@ -17,7 +17,7 @@ class Showcase {
         this.extractProductData = this.extractProductData.bind(this);
     }
 
-    async extract(): Promise<ProductExtracted[] | undefined> {
+    async extract(): Promise<ProductExtractedI[] | undefined> {
         try {
             const browser = await this.puppeteer.newBrowser();
 
@@ -69,8 +69,11 @@ class Showcase {
     }
 
     async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
+        const { site, url, baseUrl, showCaseSelectors } = pageInfo;
+
+        const page = await this.puppeteer.gotoNewPage(browser, url);
+
         try {
-            const { site, url, baseUrl, showCaseSelectors } = pageInfo;
 
             const {
                 productNameSelector,
@@ -79,7 +82,6 @@ class Showcase {
                 soldOutSelector
             } = showCaseSelectors;
 
-            const page = await this.puppeteer.gotoNewPage(browser, url);
 
             if(!page) throw new Error("Couldnt go to new page.");
 
@@ -105,13 +107,12 @@ class Showcase {
 
             const result = await this.taskExecution.executeExtraction(productExtractionInfo);
 
-            await page.close();
-
             return result;
-
         } catch (err: any) {
             err.url = pageInfo.url;
             throw err;
+        } finally {
+            await page.close();
         }
     }
 

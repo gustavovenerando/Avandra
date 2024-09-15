@@ -30,9 +30,9 @@ export interface ProductExtractionI extends ExtractionI {
     extractFunction: ExtractProductDataI;
 }
 
-export interface ProductExtracted {
+export interface ProductExtractedI {
     name: string;
     url: string;
     site: "kabum" | "pichau" | "gkinfostore";
-    type: string;
+    soldOut: boolean;
 }
