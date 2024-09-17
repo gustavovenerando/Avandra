@@ -53,6 +53,7 @@ Colunas a adicionar na tabela: D
 Proximos passsos:
 - Salvar no banco utilizando Sequelize
 - Melhorar processamento utilizando threads
+- Implementar crons de processamento (Catalog e Price)
 
 Pontos a melhorar:
 - Funcao primeiro define quantidade de paginas um site por vez antes de comecar o scrapping, poderia fazer todos os sites simultaneamente.

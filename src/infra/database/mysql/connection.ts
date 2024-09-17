@@ -5,19 +5,12 @@ import { Sequelize } from "sequelize";
 
 @injectable()
 class MySqlConnection {
-    // private static instance: MySqlConnection;
-    //
-    // static getInstance(){
-    //     if(!this.instance) return new MySqlConnection();
-    //
-    //     return this.instance;
-    // }
-
     mainConn: Sequelize | undefined;
 
     constructor(
         @inject(MySqlFactory) private mysqlFactory: MySqlFactory
-    ) { }
+    ) { 
+    }
 
     async inicialize() {
         try {

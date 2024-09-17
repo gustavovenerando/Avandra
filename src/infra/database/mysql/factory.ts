@@ -9,6 +9,8 @@ class MySqlFactory {
 
         const sequelizeConn = new Sequelize(uri);
 
+        if(!sequelizeConn) throw new Error("Error to connect to mySql database!");
+
         return sequelizeConn;
     }
 
