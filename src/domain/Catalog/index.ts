@@ -6,6 +6,7 @@ import { Browser } from "puppeteer";
 import { siteArr } from "../../global";
 import ElemExtraction from "../ElemExtraction";
 import { CatalogProductI, ProductDetailInfoI } from "./interface";
+import CatalogRepository from "../../infra/database/mysql/repository/Catalog";
 
 @injectable()
 class Catalog {
@@ -13,7 +14,8 @@ class Catalog {
         @inject(Showcase) private showcase: Showcase,
         @inject(Puppeteer) private puppeteer: Puppeteer,
         @inject(TaskExecution) private taskExecution: TaskExecution,
-        @inject(ElemExtraction) private elemExtraction: ElemExtraction
+        @inject(ElemExtraction) private elemExtraction: ElemExtraction,
+        @inject(CatalogRepository) private catalogRepository: CatalogRepository
     ) { 
         this.extractProductDetails = this.extractProductDetails.bind(this);
     }
@@ -47,11 +49,14 @@ class Catalog {
                 throw new Error("Couldnt make catalog processing. No data available.");
             }
 
-            // console.log("==============>>>> Aloha: ", allProductDetailInfoData);
+            const testArr = allProductDetailInfoData.slice(0, 9);
+
+            console.log("==============>>>> Aloha: ", testArr);
 
             const catalogExtractionInfo: any = {
                 puppeteerClass: browser,
-                extractionData: allProductDetailInfoData,
+                // extractionData: allProductDetailInfoData,
+                extractionData: testArr,
                 chunkSize: 10,
                 extractFunction: this.extractProductDetails
             };
@@ -60,7 +65,11 @@ class Catalog {
 
             const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
 
-            console.log("=======>> Final result: ", aloha);
+            console.log("=======>> Saving to db: ", aloha);
+
+            await this.catalogRepository.bulkCreate(aloha);
+
+            console.log("=======>> Saved sucessfully.");
 
             await browser.close();
         } catch (err) {
@@ -69,7 +78,6 @@ class Catalog {
     }
 
     async extractProductDetails(browser: Browser, productDetailInfo: ProductDetailInfoI): Promise<CatalogProductI> {
-        //Abrir uma pagina para cada url e extrair as infos
         const { url, name, soldOut, site, catalog: { nameRegex, selectors } } = productDetailInfo;
 
         const page = await this.puppeteer.gotoNewPage(browser, url);
@@ -106,6 +114,7 @@ class Catalog {
             resultObj.site = site;
             resultObj.soldOut = soldOut;
             resultObj.url = url;
+            resultObj.name = name;
 
             console.log("=====> Result: ", resultObj);
 

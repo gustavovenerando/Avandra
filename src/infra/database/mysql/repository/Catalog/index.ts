@@ -1,21 +1,21 @@
 import { inject, injectable } from "inversify";
 import CatalogModel from "../../model/Catalog";
-import { Model, ModelStatic } from "sequelize";
 
 @injectable()
 class Catalog {
-    private readonly model: ModelStatic<Model>;
-
     constructor(
         @inject(CatalogModel) private catalogModel: CatalogModel
     ) { 
-        this.model = this.catalogModel.getModel();
     }
 
-    create(data: any){
+    async bulkCreate(data: any){
         if(!data) throw new Error("No data to save on mySql!");
 
-        this.model.create(data);
+        const model = await this.catalogModel.getModel();
+
+        if(!model) throw new Error("No model inicialized.");
+
+        await model.bulkCreate(data);
     }
 }
 

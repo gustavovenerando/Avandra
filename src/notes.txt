@@ -13,12 +13,12 @@ Classe: Catalogo
 Descricao: Montar a tabela "catalog" com informações detalhadas sobre os produtos.
 Informacoes detalhadas extraidas dos produtos: 
 {
-    marca: GALAX,
-    modelo: 47NOM7MD7QOC,
-    garantia: 12 meses de garantia,
+    brand: GALAX,
+    model: 47NOM7MD7QOC,
+    warranty: 12 meses de garantia,
     vram: 12gb,
     sgram: GDDR6X,
-    familia: RTX 4070,
+    family: RTX 4070,
 }
 
 MySQL table: catalog
@@ -29,12 +29,12 @@ Model final da tabela catalog:
     url: https://www.kabum.com.br/produto/473907/placa-de-video-rtx-4070-1-click-oc-2x-black-pci-e-galax-nvidia-geforce-12gb-gddr6x-dlss-g-sync-ray-tracing-192-bits-47nom7md8ddf,
     site: Kabum,
     tipo: GPU,
-    marca: GALAX,
-    modelo: 47NOM7MD7QOC,
-    garantia: 12 meses de garantia,
+    brand: GALAX,
+    model: 47NOM7MD7QOC,
+    warranty: 12 meses de garantia,
     vram: 12gb,
     sgram: GDDR6X,
-    familia: RTX 4070,
+    family: RTX 4070,
 }
 
 Cron: Precos dos produtos

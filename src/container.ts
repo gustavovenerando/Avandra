@@ -17,7 +17,7 @@ container.bind(MySqlFactory).toSelf();
 container.bind(MySqlConnection).toSelf().inSingletonScope();
 
 //Model
-container.bind(CatalogModel).toSelf();
+container.bind(CatalogModel).toSelf().inSingletonScope();
 
 //Repository
 container.bind(CatalogRepository).toSelf();
