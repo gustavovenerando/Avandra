@@ -51,9 +51,10 @@ Colunas a adicionar na tabela: D
 }
 
 Proximos passsos:
-- Salvar no banco utilizando Sequelize
-- Melhorar processamento utilizando threads
+- Salvar no banco utilizando Sequelize (x)
+- Criar classe para extracao de precos, model e repository para salvar na tabela Price
 - Implementar crons de processamento (Catalog e Price)
+- Melhorar processamento utilizando threads
 
 Pontos a melhorar:
 - Funcao primeiro define quantidade de paginas um site por vez antes de comecar o scrapping, poderia fazer todos os sites simultaneamente.
