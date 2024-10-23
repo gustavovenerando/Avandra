@@ -3,16 +3,18 @@ import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, Extrac
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
-import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../../global";
+import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr, siteArr } from "../../global";
 import Puppeteer from "../Puppeteer";
+import Test from "../Test";
 
 @injectable()
-class Showcase {
+class CatTest extends Test {
     constructor(
-        @inject(TaskExecution) private taskExecution: TaskExecution,
-        @inject(ElemExtraction) private elemExtraction: ElemExtraction,
-        @inject(Puppeteer) private puppeteer: Puppeteer,
+        @inject(TaskExecution) protected taskExecution: TaskExecution,
+        @inject(ElemExtraction) protected elemExtraction: ElemExtraction,
+        @inject(Puppeteer) protected puppeteer: Puppeteer,
     ) {
+        super(taskExecution, elemExtraction, puppeteer);
         this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
     }
@@ -20,6 +22,35 @@ class Showcase {
     async extract(): Promise<ProductExtractedI[] | undefined> {
         try {
             const browser = await this.puppeteer.newBrowser();
+
+            const siteInfoArr = siteArr.map(site => {
+
+            });
+
+            const x = [
+                {
+                    // Vai para extracPageData
+                    extractProductInfo: {
+                        // name: productNameSelector,
+                        // soldOut: soldOutSelector,
+                        // endpoint: productEndpointSelector,
+                        // baseUrl: ,
+                        // site: "kabum", 
+                        // type: "gpu",
+                        // nameRegex: {}
+                    },
+                    commonSelectors: {
+                        numProductSelector: "#listingCount",
+                        productCardSelector: ".productCard",
+                        numProductSelectorType: "total",
+                    },
+                    extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
+                },
+                {
+                    type: "cpu",
+                    
+                }
+            ]
 
             const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteArr);
 
@@ -43,44 +74,6 @@ class Showcase {
         }
     }
 
-    // async getAllSitesPagesInfo(browser: Browser, siteArr: any[], extractionType: string): Promise<any[]> {
-    async getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]> {
-        const sitesPagesInfo = [];
-
-        for (let siteInfo of siteArr) {
-            // const numPageSelectors = siteInfo.numPageSelectors;
-            // const numPages = await this.getNumPages(browser, numPageSelectors);
-            const numPages = await this.getNumPages(browser, siteInfo);
-            console.log("Number of pages: ", numPages);
-
-            // sitesPagesInfo.push(...this.getSitePagesInfo(numPages, siteInfo, extractionType));
-            sitesPagesInfo.push(...this.getSitePagesInfo(numPages, siteInfo));
-        }
-
-        return sitesPagesInfo;
-    }
-
-    // getSitePagesInfo(numPages: number, siteInfo: any, extractionType): any[] {
-    getSitePagesInfo(numPages: number, siteInfo: any): any[] {
-        //if(extractionType === 'catalog') extractProductInfo = {
-                // name: productNameSelector,
-                // soldOut: soldOutSelector,
-                // endpoint: productEndpointSelector,
-                // baseUrl,
-                // site
-        // };
-        //if(extractionType === 'price') extractProductInfo = {};
-        const { site, baseUrl, showcase: { extractUrl, selectors: showCaseSelectors } } = siteInfo;
-
-        const pagesInfo = [];
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-            const url = extractUrl.replace("PAGE_NUM", `${pageNum}`);
-            pagesInfo.push({ site, url, baseUrl, showCaseSelectors });
-            // pagesInfo.push({ url, productCardSelector, extractProductInfo });
-        }
-
-        return pagesInfo;
-    }
 
     // async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
     async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
@@ -161,50 +154,6 @@ class Showcase {
             throw err;
         }
     }
-
-    getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[] {
-        const productInfoSelectors = [];
-        for (let i = 1; i <= listSize; i++) {
-            const filledProductSelectors: ExtractProductInfoI = {};
-
-            for (const [key, selector] of Object.entries(extractProductInfo)) {
-                if (!selector) continue;
-                filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
-            }
-
-            productInfoSelectors.push(filledProductSelectors);
-        }
-
-        return productInfoSelectors;
-    }
-
-    async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
-        const { showcase: { extractUrl, selectors } } = siteInfo;
-        const { numProductSelectorType, numProductSelector, productCardSelector } = selectors;
-
-        const initialUrl = extractUrl.replace("PAGE_NUM", "1");
-
-        const page = await this.puppeteer.gotoNewPage(browser, initialUrl);
-
-        if(!page) throw new Error("Couldnt go to new page.");
-
-        let numPages;
-        switch (numProductSelectorType) {
-            case "pagination":
-                numPages = await this.elemExtraction.getPaginationNumber(page, numProductSelector);
-                break;
-            case "total":
-                const numProductPerPage = await this.elemExtraction.listLength(page, productCardSelector);
-                numPages = await this.elemExtraction.getProductsCountNumber(page, numProductSelector, numProductPerPage);
-                break;
-        }
-
-        await page.close();
-
-        if(!numPages) throw new Error("Couldnt get number of pages!");
-
-        return numPages;
-    }
 }
 
-export default Showcase;
+export default CatTest;

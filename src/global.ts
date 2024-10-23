@@ -41,39 +41,34 @@ export const siteArr = [
     // },
     {
         site: "kabum",
-        type: "gpu",
         baseUrl: "https://www.kabum.com.br",
-        showcase: {
-            extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
-            selectors:{
-                numProductSelector : "#listingCount",
-                productCardSelector : ".productCard",
+        type: {
+            gpu: {
+                extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
+                nameRegex: {
+                    model: /(?<= - ).*/, // GA2RZZ-00UANF (Positive Lookbehind regex)
+                    vram: /[0-9]*GB/i, //12Gb
+                    sram: /[a-z]?DDR[0-9a-z]+/i, //GDDR6X
+                    family: /(RT|GT|RX)(.+?([0-9]+))(\s?)(Super|Ti|XT)?/i, //RTX 4070ti [GT(x), RT(x), RX]
+                },
+            }
+        },
+        selectors: {
+            common: {
+                numProductSelector: "#listingCount",
+                productCardSelector: ".productCard",
+                numProductSelectorType: "total",
+            },
+            catalog: {
                 productNameSelector: '#listing main > div:nth-child(INDEX) .productLink .nameCard',
-                pricePixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
-                priceCreditSelector: "",
                 soldOutSelector: '#listing main > div:nth-child(INDEX) .productLink .unavailablePricesCard',
                 productEndpointSelector: '#listing main > div:nth-child(INDEX) .productLink',
-                numProductSelectorType: "total",
-            }
-        },
-        catalog: {
-            nameRegex: {
-                model: /(?<= - ).*/, // GA2RZZ-00UANF (Positive Lookbehind regex)
-                vram: /[0-9]*GB/i, //12Gb
-                sram: /[a-z]?DDR[0-9a-z]+/i, //GDDR6X
-                family: /(RT|GT|RX)(.+?([0-9]+))(\s?)(Super|Ti|XT)?/i, //RTX 4070ti [GT(x), RT(x), RX]
             },
-            selectors: {
-                warranty: '#technicalInfoSection div[data-testid="InfoGarantia"] > div:nth-child(2)', //12 meses de garantia
-                brand: "#technicalInfoSection div > div > div > p:nth-child(2)", //Marca: ASRock
+            price: {
+                pricePixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
+                priceCreditSelector: "",
             }
         },
-        price: {
-            selectors: {
-                pix: "#container-purchase .finalPrice",
-                credit: "#container-purchase .regularPrice",
-            }
-        }
     },
     // {
     //     site: "gkinfostore",

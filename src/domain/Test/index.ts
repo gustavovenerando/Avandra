@@ -6,12 +6,11 @@ import ElemExtraction from "../ElemExtraction";
 import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../../global";
 import Puppeteer from "../Puppeteer";
 
-@injectable()
-class Showcase {
+class Test {
     constructor(
-        @inject(TaskExecution) private taskExecution: TaskExecution,
-        @inject(ElemExtraction) private elemExtraction: ElemExtraction,
-        @inject(Puppeteer) private puppeteer: Puppeteer,
+        protected taskExecution: TaskExecution,
+        protected elemExtraction: ElemExtraction,
+        protected puppeteer: Puppeteer,
     ) {
         this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
@@ -43,48 +42,43 @@ class Showcase {
         }
     }
 
-    // async getAllSitesPagesInfo(browser: Browser, siteArr: any[], extractionType: string): Promise<any[]> {
+    // async getAllSitesPagesInfo(browser: Browser, siteInfoArr: any[]): Promise<any[]> {
     async getAllSitesPagesInfo(browser: Browser, siteArr: any[]): Promise<any[]> {
         const sitesPagesInfo = [];
 
+        // for (let siteInfo of siteInfoArr) {
         for (let siteInfo of siteArr) {
-            // const numPageSelectors = siteInfo.numPageSelectors;
-            // const numPages = await this.getNumPages(browser, numPageSelectors);
+            // const numPageInfo = {
+            //     numPageSelectors: siteInfo.commonSelectors,
+            //     extractUrl: siteInfo.extractUrl
+            // }
+            // const numPages = await this.getNumPages(browser, numPageInfo);
             const numPages = await this.getNumPages(browser, siteInfo);
             console.log("Number of pages: ", numPages);
 
-            // sitesPagesInfo.push(...this.getSitePagesInfo(numPages, siteInfo, extractionType));
+            // sitesPagesInfo.push(...this.getSitePagesInfo(numPages, siteInfo));
             sitesPagesInfo.push(...this.getSitePagesInfo(numPages, siteInfo));
         }
 
         return sitesPagesInfo;
     }
 
-    // getSitePagesInfo(numPages: number, siteInfo: any, extractionType): any[] {
     getSitePagesInfo(numPages: number, siteInfo: any): any[] {
-        //if(extractionType === 'catalog') extractProductInfo = {
-                // name: productNameSelector,
-                // soldOut: soldOutSelector,
-                // endpoint: productEndpointSelector,
-                // baseUrl,
-                // site
-        // };
-        //if(extractionType === 'price') extractProductInfo = {};
+        // const { extractUrl } = siteInfo;
         const { site, baseUrl, showcase: { extractUrl, selectors: showCaseSelectors } } = siteInfo;
 
         const pagesInfo = [];
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
             const url = extractUrl.replace("PAGE_NUM", `${pageNum}`);
             pagesInfo.push({ site, url, baseUrl, showCaseSelectors });
-            // pagesInfo.push({ url, productCardSelector, extractProductInfo });
+            // pagesInfo.push({ url, ...siteInfo });
         }
 
         return pagesInfo;
     }
 
-    // async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
     async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
-        // const { url, productCardSelector, extractProductInfo } = pageInfo;
+        // const { url, commonSelectors: { productCardSelector }, extractProductInfo } = pageInfo;
         const { site, url, baseUrl, showCaseSelectors } = pageInfo;
 
         const page = await this.puppeteer.gotoNewPage(browser, url);
@@ -155,7 +149,6 @@ class Showcase {
                 resultObj.site = site;
             }
             return resultObj;
-
         } catch (err: any) {
             err.productSelectors = extractProductInfo;
             throw err;
@@ -179,7 +172,9 @@ class Showcase {
     }
 
     async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
+        // const { numPageSelectors, extractUrl } = siteInfo;
         const { showcase: { extractUrl, selectors } } = siteInfo;
+        // const { numProductSelectorType, numProductSelector, productCardSelector } = numPageSelectors;
         const { numProductSelectorType, numProductSelector, productCardSelector } = selectors;
 
         const initialUrl = extractUrl.replace("PAGE_NUM", "1");
@@ -207,4 +202,4 @@ class Showcase {
     }
 }
 
-export default Showcase;
+export default Test;
