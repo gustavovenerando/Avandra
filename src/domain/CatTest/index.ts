@@ -15,7 +15,6 @@ class CatTest extends Test {
         @inject(Puppeteer) protected puppeteer: Puppeteer,
     ) {
         super(taskExecution, elemExtraction, puppeteer);
-        // this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
     }
 
@@ -23,6 +22,7 @@ class CatTest extends Test {
         try {
             const browser = await this.puppeteer.newBrowser();
 
+            // Colocar na classe pai
             const siteInfoArr = siteArr.map(site => {
                 const resultArr = [];
                 for(let [typeKey, typeValue] of Object.entries(site.type)){
@@ -68,8 +68,11 @@ class CatTest extends Test {
 
     async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI): Promise<any> {
         try {
-            let resultObj: any = {};
             const { site, baseUrl, type, nameRegex, ...productSelectors } = extractProductInfo;
+            let resultObj: any = {
+                site,
+                type
+            };
 
             for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
@@ -82,14 +85,26 @@ class CatTest extends Test {
                         if (endpoint.includes("http")) resultObj["url"] = endpoint;
                         else resultObj["url"] = baseUrl + endpoint;
                         break;
+                    case "name":
+                        const name = await this.elemExtraction.getText(page, selector);
+                        if(!name){
+                            resultObj["name"] = ""
+                            break;
+                        } 
+                        for (const [key, regex] of Object.entries(nameRegex)) {
+                            const foundMatch = name.match(regex);
+
+                            if (!foundMatch) resultObj[key] = "";
+                            else resultObj[key] = foundMatch[0];
+                        }
+                        break;
                     default:
                         resultObj[key] = await this.elemExtraction.getText(page, selector);
                         break;
                 }
-                resultObj.site = site;
             }
-            return resultObj;
 
+            return resultObj;
         } catch (err: any) {
             err.productSelectors = extractProductInfo;
             throw err;

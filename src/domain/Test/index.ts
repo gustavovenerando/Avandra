@@ -17,32 +17,6 @@ class Test {
         this.extractProductData = this.extractProductData.bind(this);
     }
 
-    async extract(): Promise<ProductExtractedI[] | undefined> {
-        try {
-            const browser = await this.puppeteer.newBrowser();
-
-            const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteArr);
-
-            const pageExtractionInfo: PageExtractionI = {
-                puppeteerClass: browser,
-                extractionData: allSitePagesInfoToExtractData,
-                chunkSize: PAGE_INFO_CHUNK_SIZE,
-                extractFunction: this.extracPageData
-            }
-
-            const products = await this.taskExecution.executeExtraction(pageExtractionInfo);
-
-            console.log("Products extracted: ", products);
-
-            await browser.close();
-
-            return products;
-
-        } catch (err: any) {
-            console.error("Error extracting products. Error: ", err);
-        }
-    }
-
     async getAllSitesPagesInfo(browser: Browser, siteInfoArr: any[]): Promise<any[]> {
         const sitesPagesInfo = [];
 
@@ -118,7 +92,7 @@ class Test {
                 filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
             }
 
-            productInfoSelectors.push(filledProductSelectors);
+            productInfoSelectors.push({ ...filledProductSelectors, nameRegex });
         }
 
         return productInfoSelectors;
