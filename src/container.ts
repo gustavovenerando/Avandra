@@ -10,6 +10,9 @@ import Catalog from "./domain/Catalog";
 import CatalogModel from "./infra/database/mysql/model/Catalog";
 import CatalogRepository from "./infra/database/mysql/repository/Catalog";
 
+import Test from "./domain/Test";
+import CatTest from "./domain/CatTest";
+
 let container = new Container({autoBindInjectable: true});
 
 //Connection
@@ -28,5 +31,9 @@ container.bind(TaskExecution).toSelf();
 container.bind(Puppeteer).toSelf().inSingletonScope();
 container.bind(Showcase).toSelf();
 container.bind(Catalog).toSelf();
+
+//Test
+container.bind(Test).toSelf();
+container.bind(CatTest).toSelf();
 
 export default container;

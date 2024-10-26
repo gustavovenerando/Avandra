@@ -20,62 +20,62 @@ class Catalog {
         this.extractProductDetails = this.extractProductDetails.bind(this);
     }
 
-    async extract() {
-        try {
-            //Com o banco, realizar processamento somente os produtos que nao tiverem no banco
-            //Ou seja, sem os campos price, modelo etc...
-            //Filtrar os que nao estao soldOut
-            const products = await this.showcase.extract();
-
-            if(!products) throw new Error("No products found!");
-
-            const browser = await this.puppeteer.newBrowser();
-
-            // Array de urls
-            const allProductDetailInfoData = products.map(product => {
-                const siteInfo = siteArr.find(elem => elem.site === product.site);
-
-                if(!siteInfo) return;
-
-                const { catalog } = siteInfo;
-
-                return {
-                    ...product,
-                    catalog
-                };
-            });
-
-            if(!allProductDetailInfoData || !allProductDetailInfoData.length){
-                throw new Error("Couldnt make catalog processing. No data available.");
-            }
-
-            const testArr = allProductDetailInfoData.slice(0, 9);
-
-            console.log("==============>>>> Aloha: ", testArr);
-
-            const catalogExtractionInfo: any = {
-                puppeteerClass: browser,
-                // extractionData: allProductDetailInfoData,
-                extractionData: testArr,
-                chunkSize: 10,
-                extractFunction: this.extractProductDetails
-            };
-
-            console.log("=======>> Starting process");
-
-            const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
-
-            console.log("=======>> Saving to db: ", aloha);
-
-            await this.catalogRepository.bulkCreate(aloha);
-
-            console.log("=======>> Saved sucessfully.");
-
-            await browser.close();
-        } catch (err) {
-            console.error("Error to fill Catalog. Error: ", err);
-        }
-    }
+    // async extract() {
+    //     try {
+    //         //Com o banco, realizar processamento somente os produtos que nao tiverem no banco
+    //         //Ou seja, sem os campos price, modelo etc...
+    //         //Filtrar os que nao estao soldOut
+    //         const products = await this.showcase.extract();
+    //
+    //         if(!products) throw new Error("No products found!");
+    //
+    //         const browser = await this.puppeteer.newBrowser();
+    //
+    //         // Array de urls
+    //         const allProductDetailInfoData = products.map(product => {
+    //             const siteInfo = siteArr.find(elem => elem.site === product.site);
+    //
+    //             if(!siteInfo) return;
+    //
+    //             const { catalog } = siteInfo;
+    //
+    //             return {
+    //                 ...product,
+    //                 catalog
+    //             };
+    //         });
+    //
+    //         if(!allProductDetailInfoData || !allProductDetailInfoData.length){
+    //             throw new Error("Couldnt make catalog processing. No data available.");
+    //         }
+    //
+    //         const testArr = allProductDetailInfoData.slice(0, 9);
+    //
+    //         console.log("==============>>>> Aloha: ", testArr);
+    //
+    //         const catalogExtractionInfo: any = {
+    //             puppeteerClass: browser,
+    //             // extractionData: allProductDetailInfoData,
+    //             extractionData: testArr,
+    //             chunkSize: 10,
+    //             extractFunction: this.extractProductDetails
+    //         };
+    //
+    //         console.log("=======>> Starting process");
+    //
+    //         const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
+    //
+    //         console.log("=======>> Saving to db: ", aloha);
+    //
+    //         await this.catalogRepository.bulkCreate(aloha);
+    //
+    //         console.log("=======>> Saved sucessfully.");
+    //
+    //         await browser.close();
+    //     } catch (err) {
+    //         console.error("Error to fill Catalog. Error: ", err);
+    //     }
+    // }
 
     async extractProductDetails(browser: Browser, productDetailInfo: ProductDetailInfoI): Promise<CatalogProductI> {
         const { url, name, soldOut, site, catalog: { nameRegex, selectors } } = productDetailInfo;

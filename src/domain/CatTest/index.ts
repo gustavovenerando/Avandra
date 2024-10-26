@@ -3,7 +3,7 @@ import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, Extrac
 import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
 import ElemExtraction from "../ElemExtraction";
-import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr, siteArr } from "../../global";
+import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../../global";
 import Puppeteer from "../Puppeteer";
 import Test from "../Test";
 
@@ -15,7 +15,7 @@ class CatTest extends Test {
         @inject(Puppeteer) protected puppeteer: Puppeteer,
     ) {
         super(taskExecution, elemExtraction, puppeteer);
-        this.extracPageData = this.extracPageData.bind(this);
+        // this.extracPageData = this.extracPageData.bind(this);
         this.extractProductData = this.extractProductData.bind(this);
     }
 
@@ -24,35 +24,27 @@ class CatTest extends Test {
             const browser = await this.puppeteer.newBrowser();
 
             const siteInfoArr = siteArr.map(site => {
-
-            });
-
-            const x = [
-                {
-                    // Vai para extracPageData
-                    extractProductInfo: {
-                        // name: productNameSelector,
-                        // soldOut: soldOutSelector,
-                        // endpoint: productEndpointSelector,
-                        // baseUrl: ,
-                        // site: "kabum", 
-                        // type: "gpu",
-                        // nameRegex: {}
-                    },
-                    commonSelectors: {
-                        numProductSelector: "#listingCount",
-                        productCardSelector: ".productCard",
-                        numProductSelectorType: "total",
-                    },
-                    extractUrl: "https://www.kabum.com.br/hardware/placa-de-video-vga?page_number=PAGE_NUM&page_size=100&facet_filters=&sort=most_searched",
-                },
-                {
-                    type: "cpu",
-                    
+                const resultArr = [];
+                for(let [typeKey, typeValue] of Object.entries(site.type)){
+                    resultArr.push({
+                        extractProductInfo: {
+                            name: site.selectors.catalog.productNameSelector,
+                            soldOut: site.selectors.catalog.soldOutSelector,
+                            endpoint: site.selectors.catalog.productEndpointSelector,
+                            baseUrl: site.baseUrl,
+                            site: site.site, 
+                            type: typeKey,
+                            nameRegex: typeValue.nameRegex
+                        },
+                        commonSelectors: site.selectors.common,
+                        extractUrl: typeValue.extractUrl,
+                    });
                 }
-            ]
 
-            const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteArr);
+                return resultArr;
+            }).flat();
+
+            const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteInfoArr);
 
             const pageExtractionInfo: PageExtractionI = {
                 puppeteerClass: browser,
@@ -74,61 +66,10 @@ class CatTest extends Test {
         }
     }
 
-
-    // async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
-    async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
-        // const { url, productCardSelector, extractProductInfo } = pageInfo;
-        const { site, url, baseUrl, showCaseSelectors } = pageInfo;
-
-        const page = await this.puppeteer.gotoNewPage(browser, url);
-
+    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI): Promise<any> {
         try {
-
-            const {
-                productNameSelector,
-                productCardSelector,
-                productEndpointSelector,
-                soldOutSelector
-            } = showCaseSelectors;
-
-
-            if(!page) throw new Error("Couldnt go to new page.");
-
-            const listSize = await this.elemExtraction.listLength(page, productCardSelector);
-            console.log("List size: ", listSize, "- URL: ", url);
-
-            const extractProductInfo: ExtractProductInfoI = {
-                name: productNameSelector,
-                soldOut: soldOutSelector,
-                endpoint: productEndpointSelector,
-                baseUrl,
-                site
-            }
-
-            const productInfoSelectors = this.getProductInfoSelelectors(extractProductInfo, listSize);
-
-            const productExtractionInfo: ProductExtractionI = {
-                puppeteerClass: page,
-                extractionData: productInfoSelectors,
-                chunkSize: PRODUCT_SELECTOR_CHUNK_SIZE,
-                extractFunction: this.extractProductData
-            }
-
-            const result = await this.taskExecution.executeExtraction(productExtractionInfo);
-
-            return result;
-        } catch (err: any) {
-            err.url = pageInfo.url;
-            throw err;
-        } finally {
-            await page.close();
-        }
-    }
-
-    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI) {
-        try {
-            let resultObj: ExtractedProductSelectorsI = {};
-            const { site, baseUrl, ...productSelectors } = extractProductInfo;
+            let resultObj: any = {};
+            const { site, baseUrl, type, nameRegex, ...productSelectors } = extractProductInfo;
 
             for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
