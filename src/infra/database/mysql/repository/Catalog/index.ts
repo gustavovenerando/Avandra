@@ -15,7 +15,7 @@ class Catalog {
 
         if(!model) throw new Error("No model inicialized.");
 
-        await model.bulkCreate(data);
+        await model.bulkCreate(data, { updateOnDuplicate: ["name", "model", "vram", "sram", "family"]});
     }
 }
 

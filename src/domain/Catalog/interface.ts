@@ -1,21 +1,38 @@
-import { ProductExtractedI } from "../Product/interface";
+import { Page, Browser } from "puppeteer";
 
-export interface CatalogProductI extends ProductExtractedI {
-    model: string;
-    vram: string;
-    sram: string;
-    family: string;
-    warranty: string;
-    brand: string;
+interface ExtractionI{
+    readonly puppeteerClass: any;
+    chunkSize: number;
+    extractionData: string[]; 
 }
 
-export interface ProductDetailInfoI extends ProductExtractedI {
-    catalog: {
-        nameRegex?: {
-            [key: string]: RegExp;
-        },
-        selectors?: {
-            [key: string]: string;
-        }
-    }
+export interface ExtractPageDataI {
+    (browser: Browser, pageInfo: any): Promise<any[]>;
+}
+
+export interface ExtractProductDataI {
+    (page: Page, productSelectors: ExtractProductInfoI): Promise<ExtractedProductSelectorsI>;
+}
+
+export interface ExtractProductInfoI {
+    [key: string]: string
+}
+
+export interface ExtractedProductSelectorsI {
+    [key: string]: string | boolean
+}
+
+export interface PageExtractionI extends ExtractionI {
+    extractFunction: ExtractPageDataI;
+}
+
+export interface ProductExtractionI extends ExtractionI {
+    extractFunction: ExtractProductDataI;
+}
+
+export interface ProductExtractedI {
+    name: string;
+    url: string;
+    site: "kabum" | "pichau" | "gkinfostore";
+    soldOut: boolean;
 }

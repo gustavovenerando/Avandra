@@ -1,109 +1,86 @@
-import { inject, injectable } from "inversify";
-import Showcase from "../Product";
-import Puppeteer from "../Puppeteer";
+import { Browser, Page } from "puppeteer";
+import { ExtractedProductSelectorsI, PageExtractionI, ProductExtractionI, ExtractProductInfoI, ProductExtractedI } from "./interface";
+import { injectable, inject } from "inversify";
 import TaskExecution from "../TaskExecution";
-import { Browser } from "puppeteer";
-import { siteArr } from "../../global";
 import ElemExtraction from "../ElemExtraction";
-import { CatalogProductI, ProductDetailInfoI } from "./interface";
+import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../../global";
+import Puppeteer from "../Puppeteer";
+import ProductExtraction from "../ProductExtraction";
 import CatalogRepository from "../../infra/database/mysql/repository/Catalog";
 
 @injectable()
-class Catalog {
+class Catalog extends ProductExtraction {
     constructor(
-        @inject(Showcase) private showcase: Showcase,
-        @inject(Puppeteer) private puppeteer: Puppeteer,
-        @inject(TaskExecution) private taskExecution: TaskExecution,
-        @inject(ElemExtraction) private elemExtraction: ElemExtraction,
+        @inject(TaskExecution) protected taskExecution: TaskExecution,
+        @inject(ElemExtraction) protected elemExtraction: ElemExtraction,
+        @inject(Puppeteer) protected puppeteer: Puppeteer,
         @inject(CatalogRepository) private catalogRepository: CatalogRepository
-    ) { 
-        this.extractProductDetails = this.extractProductDetails.bind(this);
+    ) {
+        super(taskExecution, elemExtraction, puppeteer);
+        this.extractProductData = this.extractProductData.bind(this);
     }
 
-    // async extract() {
-    //     try {
-    //         //Com o banco, realizar processamento somente os produtos que nao tiverem no banco
-    //         //Ou seja, sem os campos price, modelo etc...
-    //         //Filtrar os que nao estao soldOut
-    //         const products = await this.showcase.extract();
-    //
-    //         if(!products) throw new Error("No products found!");
-    //
-    //         const browser = await this.puppeteer.newBrowser();
-    //
-    //         // Array de urls
-    //         const allProductDetailInfoData = products.map(product => {
-    //             const siteInfo = siteArr.find(elem => elem.site === product.site);
-    //
-    //             if(!siteInfo) return;
-    //
-    //             const { catalog } = siteInfo;
-    //
-    //             return {
-    //                 ...product,
-    //                 catalog
-    //             };
-    //         });
-    //
-    //         if(!allProductDetailInfoData || !allProductDetailInfoData.length){
-    //             throw new Error("Couldnt make catalog processing. No data available.");
-    //         }
-    //
-    //         const testArr = allProductDetailInfoData.slice(0, 9);
-    //
-    //         console.log("==============>>>> Aloha: ", testArr);
-    //
-    //         const catalogExtractionInfo: any = {
-    //             puppeteerClass: browser,
-    //             // extractionData: allProductDetailInfoData,
-    //             extractionData: testArr,
-    //             chunkSize: 10,
-    //             extractFunction: this.extractProductDetails
-    //         };
-    //
-    //         console.log("=======>> Starting process");
-    //
-    //         const aloha = await this.taskExecution.executeExtraction(catalogExtractionInfo);
-    //
-    //         console.log("=======>> Saving to db: ", aloha);
-    //
-    //         await this.catalogRepository.bulkCreate(aloha);
-    //
-    //         console.log("=======>> Saved sucessfully.");
-    //
-    //         await browser.close();
-    //     } catch (err) {
-    //         console.error("Error to fill Catalog. Error: ", err);
-    //     }
-    // }
-
-    async extractProductDetails(browser: Browser, productDetailInfo: ProductDetailInfoI): Promise<CatalogProductI> {
-        const { url, name, soldOut, site, catalog: { nameRegex, selectors } } = productDetailInfo;
-
-        const page = await this.puppeteer.gotoNewPage(browser, url);
+    async extract(): Promise<void> {
+        const browser = await this.puppeteer.newBrowser();
 
         try {
-            if(!page) throw new Error("Couldnt go to new page.");
+            const siteInfo = this.siteInfoMaker();
 
-            if(!selectors) throw new Error("Couldnt find caltalog selectors!");
+            const allSitePagesInfoToExtractData = await this.getAllSitesPagesInfo(browser, siteInfo);
 
-            let resultObj: any = { };
+            const pageExtractionInfo: PageExtractionI = {
+                puppeteerClass: browser,
+                extractionData: allSitePagesInfoToExtractData,
+                chunkSize: PAGE_INFO_CHUNK_SIZE,
+                extractFunction: this.extracPageData
+            };
 
-            if (nameRegex) {
-                for (const [key, regex] of Object.entries(nameRegex)) {
-                    const foundMatch = name.match(regex);
+            const products = await this.taskExecution.executeExtraction(pageExtractionInfo);
 
-                    if (!foundMatch) resultObj[key] = "";
-                    else resultObj[key] = foundMatch[0];
-                }
-            }
+            console.log("=======>> Products extracted: ", products);
 
-            for (const [key, selector] of Object.entries(selectors)) {
+            await this.catalogRepository.bulkCreate(products);
+
+            console.log("=======>> Saved sucessfully.");
+        } catch (err: any) {
+            console.error("Error extracting products. Error: ", err);
+        } finally {
+            await browser.close();
+        }
+    }
+
+    protected async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI): Promise<any> {
+        try {
+            const { site, baseUrl, type, nameRegex, ...productSelectors } = extractProductInfo;
+            let resultObj: any = {
+                site,
+                type
+            };
+
+            for (const [key, selector] of Object.entries(productSelectors)) {
                 switch (key) {
-                    case "brand":
-                        let brand = await this.elemExtraction.getText(page, selector);
-                        if(site === 'kabum') brand = brand.split(":")[1].trim();  
-                        resultObj[key] = brand;
+                    case "soldOut":
+                        const isSoldOut = await this.elemExtraction.getText(page, selector, true);
+                        resultObj[key] = !!isSoldOut;
+                        break;
+                    case "endpoint":
+                        const endpoint = await this.elemExtraction.getHref(page, selector);
+                        if (endpoint.includes("http")) resultObj["url"] = endpoint;
+                        else resultObj["url"] = baseUrl + endpoint;
+                        break;
+                    case "name":
+                        const name = await this.elemExtraction.getText(page, selector);
+                        if(!name){
+                            resultObj["name"] = "";
+                            break;
+                        } 
+                        resultObj["name"] = name;
+                        for (const [key, regex] of Object.entries(nameRegex)) {
+                            const foundMatch = name.match(regex);
+
+                            if (!foundMatch) resultObj[key] = "";
+                            else resultObj[key] = foundMatch[0];
+                        }
                         break;
                     default:
                         resultObj[key] = await this.elemExtraction.getText(page, selector);
@@ -111,20 +88,36 @@ class Catalog {
                 }
             }
 
-            resultObj.site = site;
-            resultObj.soldOut = soldOut;
-            resultObj.url = url;
-            resultObj.name = name;
-
-            console.log("=====> Result: ", resultObj);
-
             return resultObj;
         } catch (err: any) {
-            err.url = url;
+            err.productSelectors = extractProductInfo;
             throw err;
-        } finally {
-            await page.close();
         }
+    }
+
+    private siteInfoMaker() {
+        const siteInfoArr = siteArr.map(site => {
+            const resultArr = [];
+            for (let [typeKey, typeValue] of Object.entries(site.type)) {
+                resultArr.push({
+                    extractProductInfo: {
+                        name: site.selectors.catalog.productNameSelector,
+                        soldOut: site.selectors.catalog.soldOutSelector,
+                        endpoint: site.selectors.catalog.productEndpointSelector,
+                        baseUrl: site.baseUrl,
+                        site: site.site,
+                        type: typeKey,
+                        nameRegex: typeValue.nameRegex
+                    },
+                    commonSelectors: site.selectors.common,
+                    extractUrl: typeValue.extractUrl,
+                });
+            }
+
+            return resultArr;
+        }).flat();
+
+        return siteInfoArr;
     }
 }
 

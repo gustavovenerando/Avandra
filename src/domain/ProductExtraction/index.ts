@@ -7,7 +7,7 @@ import { PAGE_INFO_CHUNK_SIZE, PRODUCT_SELECTOR_CHUNK_SIZE, siteArr } from "../.
 import Puppeteer from "../Puppeteer";
 
 @injectable()
-class Test {
+class ProductExtraction {
     constructor(
         protected taskExecution: TaskExecution,
         protected elemExtraction: ElemExtraction,
@@ -17,7 +17,7 @@ class Test {
         this.extractProductData = this.extractProductData.bind(this);
     }
 
-    async getAllSitesPagesInfo(browser: Browser, siteInfoArr: any[]): Promise<any[]> {
+    protected async getAllSitesPagesInfo(browser: Browser, siteInfoArr: any[]): Promise<any[]> {
         const sitesPagesInfo = [];
 
         for (let siteInfo of siteInfoArr) {
@@ -34,7 +34,7 @@ class Test {
         return sitesPagesInfo;
     }
 
-    getSitePagesInfo(numPages: number, siteInfo: any): any[] {
+    private getSitePagesInfo(numPages: number, siteInfo: any): any[] {
         const { extractUrl } = siteInfo;
 
         const pagesInfo = [];
@@ -46,7 +46,7 @@ class Test {
         return pagesInfo;
     }
 
-    async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
+    protected async extracPageData(browser: Browser, pageInfo: any): Promise<any[]> {
         const { url, commonSelectors: { productCardSelector }, extractProductInfo } = pageInfo;
 
         const page = await this.puppeteer.gotoNewPage(browser, url);
@@ -77,10 +77,10 @@ class Test {
         }
     }
 
-    async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI) {
+    protected async extractProductData(page: Page, extractProductInfo: ExtractProductInfoI) {
     }
 
-    getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[] {
+    private getProductInfoSelelectors(extractProductInfo: ExtractProductInfoI, listSize: number): any[] {
         const productInfoSelectors = [];
         const { nameRegex, ...selectors } = extractProductInfo;
 
@@ -98,7 +98,7 @@ class Test {
         return productInfoSelectors;
     }
 
-    async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
+    private async getNumPages(browser: Browser, siteInfo: any): Promise<number> {
         const { numPageSelectors, extractUrl } = siteInfo;
         const { numProductSelectorType, numProductSelector, productCardSelector } = numPageSelectors;
 
@@ -127,4 +127,4 @@ class Test {
     }
 }
 
-export default Test;
+export default ProductExtraction;

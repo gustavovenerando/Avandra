@@ -20,23 +20,20 @@ class Catalog {
         const model = this.conn.define(
             'Catalog',
             {
-                name: {
-                    type: DataTypes.STRING
-                },
                 url: {
                     type: DataTypes.STRING,
                     unique: true
                 },
+                type: {
+                    type: DataTypes.STRING,
+                },
+                name: {
+                    type: DataTypes.STRING
+                },
                 site: {
                     type: DataTypes.STRING,
                 },
-                brand: {
-                    type: DataTypes.STRING,
-                },
                 model: {
-                    type: DataTypes.STRING,
-                },
-                warranty: {
                     type: DataTypes.STRING,
                 },
                 vram: {
