@@ -65,8 +65,8 @@ export const siteArr = [
                 productEndpointSelector: '#listing main > div:nth-child(INDEX) .productLink',
             },
             price: {
-                pricePixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
-                priceCreditSelector: "",
+                pixSelector: '#listing main > div:nth-child(INDEX) .productLink .priceCard',
+                creditSelector: "",
             }
         },
     },

@@ -92,7 +92,10 @@ class ProductExtraction {
                 filledProductSelectors[key] = selector.replace("INDEX", `${i}`);
             }
 
-            productInfoSelectors.push({ ...filledProductSelectors, nameRegex });
+            let obj = { ...filledProductSelectors };
+            if(nameRegex) obj = { ...obj, nameRegex};
+
+            productInfoSelectors.push(obj);
         }
 
         return productInfoSelectors;
